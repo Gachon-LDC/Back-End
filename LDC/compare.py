@@ -5,7 +5,7 @@ from numpy.linalg import norm
 import torch
 
 
-sys.path.append(path.abspath("./pose"))
+sys.path.append(path.abspath("./pose_net"))
 from pose.models.with_mobilenet import PoseEstimationWithMobileNet
 from pose.modules.load_state import load_state
 from predict import CHECKPOINT, ImageReader, predict_ret_pose_frame

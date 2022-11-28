@@ -11,7 +11,7 @@ import pandas as pd
 from matplotlib import pyplot
 
 
-sys.path.append(path.abspath("./pose"))
+sys.path.append(path.abspath("./pose_net"))
 from pose.models.with_mobilenet import PoseEstimationWithMobileNet
 from pose.modules.keypoints import extract_keypoints, group_keypoints
 from pose.modules.load_state import load_state
