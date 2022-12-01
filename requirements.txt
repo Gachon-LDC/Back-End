@@ -1,0 +1,8 @@
+torch
+matplotlib
+opencv-python-headless
+numpy
+pycocotools
+
+django
+djangorestframework
