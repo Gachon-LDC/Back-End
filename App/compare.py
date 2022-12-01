@@ -1,27 +1,33 @@
 import sys
 from os import path
+import numpy as np
 from numpy import dot
 from numpy.linalg import norm
 import torch
-
 sys.path.append(path.abspath("App/pose_net"))
-from .predict import CHECKPOINT, ImageReader, predict_ret_pose_frame
-from .pose_net.modules.load_state import load_state
+
 from .pose_net.models.with_mobilenet import PoseEstimationWithMobileNet
+from .pose_net.modules.load_state import load_state
+from .predict import CHECKPOINT, ImageReader, predict_ret_pose_frame
 
 impath = "./move1.jpeg"
 impath2 = "./move1_compare1.jpeg"
 
 
-def cos_sim(a, b):
+def map_norm_item(item_list):
+    ret = []
+    for item in item_list:
+        ret.append({'value':item, 'norm': norm(item)})
+    return ret
 
-    b_norms = [norm(b_item) for b_item in b]
+def cos_sim(a, b):
+    a_nalue_norm = map_norm_item(a)
+    b_nalue_norm = map_norm_item(b)
     max_sim = 0
 
-    for a_item in a:
-        a_norm = norm(a)
-        for i, b_norm in enumerate(b_norms):
-            sim = dot(a_item, b[i]) / (a_norm * b_norm)
+    for a in a_nalue_norm:
+        for b in b_nalue_norm:
+            sim = np.divide(dot(a['value'], b['value']), np.multiply(a['norm'], b['norm']))
             if sim > max_sim:
                 max_sim = sim
     return max_sim
