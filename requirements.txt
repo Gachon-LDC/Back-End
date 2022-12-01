@@ -6,3 +6,4 @@ pycocotools
 
 django
 djangorestframework
+django-cors-headers

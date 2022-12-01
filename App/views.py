@@ -26,11 +26,7 @@ def register_dance(request):
         return JsonResponse(serializer.data, safe=False)
 
     if request.method == 'POST':
-        print(request)
         data = JSONParser().parse(request)
-        print(data)
-        serializer = VideoModelSerializer(data=data)
-        print(serializer)
         if serializer.is_valid():
             # 여기에 코드 반환을 하면 될듯
             return JsonResponse(serializer.data, status=201)
@@ -52,7 +48,7 @@ def learn_dance(request):
         #SaveFile.save_file_at_dir('./App/'+data["user_id"]+'/'+str(image_folder_count)+'/', str(data["image_id"])+'_Test.png', decode_result)
         #image_folder_count =image_folder_count
         serializer = UserDanceSerializer(data=data)
-
+        print(data['image'])
         base64_decoded = base64.b64decode(data["image"])
         image = Image.open(io.BytesIO(base64_decoded))
         image_np = np.array(image)
