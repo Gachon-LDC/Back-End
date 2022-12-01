@@ -6,6 +6,8 @@ from django.db.models import (
     IntegerField,
     FileField,
     BooleanField,
+    CharField,
+    ImageField
 )
 
 # Create your models here.
@@ -21,8 +23,14 @@ class VideoModel(Model):
 
 
 class UserDance(Model):
-    video_id = UUIDField(primary_key=True)
+    video_id = UUIDField()
     user_id = UUIDField()
-    image_id = IntegerField()
+    image_id = IntegerField(primary_key=True)
     image = TextField()
     end_image = BooleanField(default=False)
+    
+    
+class ImageUpload(Model):
+    title = CharField(max_length=200)
+    text = TextField()
+    image = ImageField(upload_to="%Y/%m/%d")

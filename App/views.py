@@ -8,6 +8,10 @@ from App.serializers import UserDanceSerializer, VideoModelSerializer
 from django.views.decorators.csrf import csrf_exempt
 import base64
 from App.apps import SaveFile
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+import io
 
 # Create your views here.
 
@@ -41,11 +45,6 @@ def learn_dance(request):
     
     if request.method =='POST':
         data = JSONParser().parse(request)
-        # print(data["video_id"])
-        # print(data["user_id"])
-        # print(data["image_id"])
-        # print(data["image"])
-        # print(data["end_image"])
         
         #이미지 파일 디코딩한 값
         decode_result = base64.b64decode(data["image"])
@@ -54,9 +53,16 @@ def learn_dance(request):
         #image_folder_count =image_folder_count
         
         serializer = UserDanceSerializer(data=data)
-        print(serializer.data['end_image'])
         
-        if serializer.is_valid() :
+        base64_decoded = base64.b64decode(data["image"])
+        image = Image.open(io.BytesIO(base64_decoded))
+        image_np = np.array(image)
+        plt.imshow(image_np)
+        plt.show()
+        
+        if serializer.is_valid() and serializer.get('end_image') == True:   # serializer가 유효하고, end_image값이 True일대 밑의 문장이 실행됨. 
             #serializer.save()
             return JsonResponse(serializer.validated_data, status=201)
         return JsonResponse(serializer.errors, status=400)
+    
+        
