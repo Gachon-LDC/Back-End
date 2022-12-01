@@ -11,21 +11,23 @@ import pandas as pd
 from matplotlib import pyplot
 
 
-sys.path.append(path.abspath("./pose_net"))
-from pose.models.with_mobilenet import PoseEstimationWithMobileNet
-from pose.modules.keypoints import extract_keypoints, group_keypoints
-from pose.modules.load_state import load_state
-from pose.modules.pose import Pose, track_poses
-from pose.val import normalize, pad_width
+sys.path.append(path.abspath("App/pose_net"))
+
+from .pose_net.models.with_mobilenet import PoseEstimationWithMobileNet
+from .pose_net.modules.keypoints import extract_keypoints, group_keypoints
+from .pose_net.modules.load_state import load_state
+from .pose_net.modules.pose import Pose, track_poses
+from .pose_net.val import normalize, pad_width
 
 
-CHECKPOINT = "./model_weight.pth"
+CHECKPOINT = "./model/weight.pth"
 
 
 class ImageReader(object):
-    def __init__(self, file_names):
-        self.file_names = file_names
-        self.max_idx = len(file_names)
+    def __init__(self, iamges, isfile = True):
+        self.iamges = iamges
+        self.max_idx = len(iamges)
+        self.isfile = isfile
 
     def __iter__(self):
         self.idx = 0
@@ -34,9 +36,9 @@ class ImageReader(object):
     def __next__(self):
         if self.idx == self.max_idx:
             raise StopIteration
-        img = cv2.imread(self.file_names[self.idx], cv2.IMREAD_COLOR)
+        img = cv2.imread(self.iamges[self.idx], cv2.IMREAD_COLOR) if self.isfile else self.images[self.idx]
         if img.size == 0:
-            raise IOError("Image {} cannot be read".format(self.file_names[self.idx]))
+            raise IOError("Image {} cannot be read".format(self.iamges[self.idx]))
         self.idx = self.idx + 1
         return img
 
