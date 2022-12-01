@@ -24,9 +24,9 @@ CHECKPOINT = "./model/weight.pth"
 
 
 class ImageReader(object):
-    def __init__(self, iamges, isfile = True):
-        self.iamges = iamges
-        self.max_idx = len(iamges)
+    def __init__(self, images, isfile = True):
+        self.images = images
+        self.max_idx = len(images)
         self.isfile = isfile
 
     def __iter__(self):
@@ -36,9 +36,9 @@ class ImageReader(object):
     def __next__(self):
         if self.idx == self.max_idx:
             raise StopIteration
-        img = cv2.imread(self.iamges[self.idx], cv2.IMREAD_COLOR) if self.isfile else self.images[self.idx]
+        img = cv2.imread(self.images[self.idx], cv2.IMREAD_COLOR) if self.isfile else self.images[self.idx]
         if img.size == 0:
-            raise IOError("Image {} cannot be read".format(self.iamges[self.idx]))
+            raise IOError("Image {} cannot be read".format(self.images[self.idx]))
         self.idx = self.idx + 1
         return img
 
