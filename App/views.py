@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
@@ -6,12 +5,11 @@ from App.models import VideoModel
 from App.serializers import VideoModelSerializer
 from django.views.decorators.csrf import csrf_exempt
 import base64
-import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 import io
 import cv2
-from .compare import compare
+from App.services.compare import compare
 
 # Create your views here.
 

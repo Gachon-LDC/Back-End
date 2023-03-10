@@ -30,6 +30,7 @@ class VideoModel(Model):
     embeds = TextField()
     dance = ForeignKey(DanceCategoryModel, on_delete=models.PROTECT)
     fps = IntegerField()
+    content = TextField()
 
 
 class CommentModel(Model):

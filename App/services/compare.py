@@ -6,8 +6,8 @@ from numpy.linalg import norm
 import torch
 sys.path.append(path.abspath("App/pose_net"))
 
-from .pose_net.models.with_mobilenet import PoseEstimationWithMobileNet
-from .pose_net.modules.load_state import load_state
+from ..pose_net.models.with_mobilenet import PoseEstimationWithMobileNet
+from ..pose_net.modules.load_state import load_state
 from .predict import CHECKPOINT, ImageReader, predict_ret_pose_frame
 
 impath = "./move1.jpeg"

@@ -13,11 +13,11 @@ from matplotlib import pyplot
 
 sys.path.append(path.abspath("App/pose_net"))
 
-from .pose_net.models.with_mobilenet import PoseEstimationWithMobileNet
-from .pose_net.modules.keypoints import extract_keypoints, group_keypoints
-from .pose_net.modules.load_state import load_state
-from .pose_net.modules.pose import Pose, track_poses
-from .pose_net.val import normalize, pad_width
+from ..pose_net.models.with_mobilenet import PoseEstimationWithMobileNet
+from ..pose_net.modules.keypoints import extract_keypoints, group_keypoints
+from ..pose_net.modules.load_state import load_state
+from ..pose_net.modules.pose import Pose, track_poses
+from ..pose_net.val import normalize, pad_width
 
 
 CHECKPOINT = "./model/weight.pth"
