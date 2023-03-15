@@ -1,9 +1,8 @@
 from django.http import HttpResponse
 
-
+# /video
 def video_controller(req):
     return HttpResponse("video contrtoller")
-    pass
 
 
 # GET

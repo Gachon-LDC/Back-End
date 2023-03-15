@@ -1,6 +1,9 @@
 # /video/[video id]
-def video_content_controller(req, id):
-    pass
+from django.http import HttpResponse
+
+
+def content_controller(req, video_id):
+    return HttpResponse(f"content controller id : {video_id}")
 
 
 # GET(id) /video/[video id]
