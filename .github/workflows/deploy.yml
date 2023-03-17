@@ -24,4 +24,4 @@ jobs:
             git pull
             pipenv install
             screen -S ldc_backend  -X quite
-            screen -dmS ldc_backend bash -c 'cd /home/ldc/Back-End; gunicorn --bind :10010 LDC.wsgi:application'
+            screen -dmS ldc_backend bash -c 'cd /home/ldc/Back-End;pipenv shell; gunicorn --bind :10010 LDC.wsgi:application'
