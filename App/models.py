@@ -12,7 +12,7 @@ class UserModel(Model):
     uid = UUIDField(primary_key=True)
     email = TextField()
     pwd = TextField()
-    salt = TextField
+    salt = TextField()
 
 
 class DanceCategoryModel(Model):
@@ -22,11 +22,14 @@ class DanceCategoryModel(Model):
 
 # Create your models here.
 class VideoModel(Model):
+    """file path : static/video/UID"""
+
     video_id = UUIDField(primary_key=True)
     uploader_id = ForeignKey(
         UserModel, on_delete=models.SET_NULL, null=True
     )  # many to one @ User.uid,
-    file_path = TextField()  # file Path
+    title = TextField()
+
     embeds = TextField()
     dance = ForeignKey(DanceCategoryModel, on_delete=models.PROTECT)
     fps = IntegerField()
