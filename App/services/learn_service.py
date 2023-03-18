@@ -5,13 +5,11 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from App.models import VideoModel
+from App.services.model_compare import get_angle, cos_sim
+import json
 
-from .compare import compare
-__all__ = ["cvt_base64_2_np", "compare"]
-
-
-
-def cvt_base64_2_np(image):
+def cvt_base64_2_np(image: str):
     """convert base64 image to PIL.Image"""
     base64_decoded = base64.b64decode(image)
     image = Image.open(io.BytesIO(base64_decoded))
@@ -20,8 +18,11 @@ def cvt_base64_2_np(image):
     return image_np
 
 
-if __name__ == "__main__":
-    impath = cv2.imread("./move1.jpeg")
-    impath2 = cv2.imread("./move1_compare1.jpeg")
-    cos = compare(impath, impath2, isfile=True)
-    print(cos)
+def compare_from_frame(
+    img: np.ndarray, video: VideoModel, frame_num: int
+) -> float:
+    embeds = json.loads(video.embeds)
+    angle1 = embeds[frame_num]
+    angle2 = get_angle(img)
+    
+    return cos_sim(angle1, angle2)

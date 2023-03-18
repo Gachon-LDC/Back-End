@@ -1,6 +1,6 @@
 import numpy as np
 
-from .predict import POST_NET, ImageReader, predict_pose
+from .model_predict import POST_NET, ImageReader, predict_pose
 
 
 def map_norm_item(item_list):
@@ -25,18 +25,16 @@ def cos_sim(a, b):
     return max_sim
 
 
-def compare(image1: np.ndarray, image2: np.ndarray, isfile=False):
-    """calc simirarity from 2 np images"""
-    frame_provider = ImageReader([image1], isfile=isfile)
-    angle0 = predict_pose(POST_NET, frame_provider, cpu=True).angles[0]
-    frame_provider2 = ImageReader([image2], isfile=isfile)
-    angle1 = predict_pose(POST_NET, frame_provider2, cpu=True).angles[0]
-    cos = cos_sim(angle0, angle1)
-    return cos
+def get_angle(image: np.ndarray, angle_idx=0, isfile=False):
+    frame_provider = ImageReader([image], isfile=isfile)
+    angle = predict_pose(POST_NET, frame_provider).angles[angle_idx]
+    return angle
 
 
 if __name__ == "__main__":
     impath = "./move1.jpeg"
     impath2 = "./move1_compare1.jpeg"
-    cos = compare(impath, impath2, isfile=True)
+    angle1 = get_angle(impath, isfile=True)
+    angle2 = get_angle(impath, isfile=True)
+    cos = cos_sim(angle1, angle2)
     print(cos)

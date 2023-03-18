@@ -20,7 +20,7 @@ def video_controller(req: HttpRequest):
             raise HttpError(HTTPStatus.NOT_FOUND)
 
 
-async def video_list(req: HttpRequest):
+def video_list(req: HttpRequest):
     """_summary_ get VideoList
     ### Params
     offset : Optional[int]
@@ -29,7 +29,7 @@ async def video_list(req: HttpRequest):
     offset = int_or_0(req.GET.get("offset"))
     limit = int_or_0(req.GET.get("limit", 10))
 
-    videos = await VideoModel.objects.all()[offset : offset + limit]
+    videos = VideoModel.objects.get()[offset : offset + limit]
     serailized = VideoModelSerializer(videos, many=True)
     return JsonResponse(serailized, ensure_ascii=True)
 
