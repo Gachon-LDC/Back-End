@@ -1,30 +1,26 @@
 import sys
 from os import path
-import argparse
 from typing import Any
-import json
+
 import cv2
 import numpy as np
+import pandas as pd
 import torch
 
-import pandas as pd
-from matplotlib import pyplot
-
-
 sys.path.append(path.abspath("App/pose_net"))
-
 from ..pose_net.models.with_mobilenet import PoseEstimationWithMobileNet
 from ..pose_net.modules.keypoints import extract_keypoints, group_keypoints
 from ..pose_net.modules.load_state import load_state
 from ..pose_net.modules.pose import Pose, track_poses
 from ..pose_net.val import normalize, pad_width
 
-
-CHECKPOINT = "./model/weight.pth"
+__CHECKPOINT = "./model/weight.pth"
+POST_NET = PoseEstimationWithMobileNet()
+load_state(POST_NET, torch.load(__CHECKPOINT, map_location="cpu"))
 
 
 class ImageReader(object):
-    def __init__(self, images, isfile = True):
+    def __init__(self, images, isfile=True):
         self.images = images
         self.max_idx = len(images)
         self.isfile = isfile
@@ -36,7 +32,11 @@ class ImageReader(object):
     def __next__(self):
         if self.idx == self.max_idx:
             raise StopIteration
-        img = cv2.imread(self.images[self.idx], cv2.IMREAD_COLOR) if self.isfile else self.images[self.idx]
+        img = (
+            cv2.imread(self.images[self.idx], cv2.IMREAD_COLOR)
+            if self.isfile
+            else self.images[self.idx]
+        )
         if img.size == 0:
             raise IOError("Image {} cannot be read".format(self.images[self.idx]))
         self.idx = self.idx + 1
@@ -391,6 +391,10 @@ def save_result(args, video_mode, poses, angles, frames):
 
 
 if __name__ == "__main__":
+    import argparse
+    import json
+    from os import path
+
     parser = argparse.ArgumentParser(
         description="""Lightweight human pose estimation python demo.
                        This is just for quick results preview.
@@ -412,13 +416,11 @@ if __name__ == "__main__":
     parser.add_argument("--track", type=int, default=1, help="track pose id in video")
     parser.add_argument("--smooth", type=int, default=1, help="smooth pose keypoints")
     args = parser.parse_args()
-
+    if args.display:
+        from matplotlib import pyplot
     if args.video == "" and args.images == "":
         raise ValueError("Either --video or --image has to be provided")
 
-    net = PoseEstimationWithMobileNet()
-    checkpoint = torch.load(CHECKPOINT, map_location="cpu")
-    load_state(net, checkpoint)
     video_mode = False
     if args.images != "":
         frame_provider: Any = ImageReader(args.images)
@@ -427,7 +429,13 @@ if __name__ == "__main__":
         frame_provider = VideoReader(args.video)
 
     poses, angles, frames = predict_ret_pose_frame(
-        net, frame_provider, args.cpu, args.track, args.smooth, args.display, args.save
+        POST_NET,
+        frame_provider,
+        args.cpu,
+        args.track,
+        args.smooth,
+        args.display,
+        args.save,
     )
     if args.save:
         save_result(args, video_mode, poses, angles, frames)
