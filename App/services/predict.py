@@ -14,9 +14,12 @@ from ..pose_net.modules.load_state import load_state
 from ..pose_net.modules.pose import Pose, track_poses
 from ..pose_net.val import normalize, pad_width
 
+# region load Model
 __CHECKPOINT = "./model/weight.pth"
 POST_NET = PoseEstimationWithMobileNet()
+POST_NET = POST_NET.eval()
 load_state(POST_NET, torch.load(__CHECKPOINT, map_location="cpu"))
+# endregion
 
 
 class ImageReader(object):
@@ -45,11 +48,10 @@ class ImageReader(object):
 
 class VideoReader(object):
     def __init__(self, file_name):
-        self.file_name = file_name
         try:  # OpenCV needs int to read from webcam
             self.file_name = int(file_name)
         except ValueError:
-            pass
+            self.file_name = file_name
 
     def __iter__(self):
         self.cap = cv2.VideoCapture(self.file_name)
@@ -64,18 +66,74 @@ class VideoReader(object):
         return img
 
 
+class Angle:
+    def __init__(self, key_points) -> None:
+        self.r_sho = self.calc_angle(key_points[1], key_points[2], key_points[3])
+        self.l_sho = self.calc_angle(key_points[1], key_points[5], key_points[6])
+        self.r_neck_up = self.calc_angle(key_points[0], key_points[1], key_points[2])
+        self.l_neck_up = self.calc_angle(key_points[0], key_points[1], key_points[5])
+        self.r_nect_down = self.calc_angle(key_points[2], key_points[1], key_points[8])
+        self.l_nect_down = self.calc_angle(key_points[5], key_points[1], key_points[11])
+        self.r_elbo = self.calc_angle(key_points[2], key_points[3], key_points[4])
+        self.l_elbo = self.calc_angle(key_points[5], key_points[6], key_points[7])
+        self.l_hip = self.calc_angle(key_points[1], key_points[11], key_points[12])
+        self.r_hip = self.calc_angle(key_points[1], key_points[8], key_points[9])
+        self.l_knee = self.calc_angle(key_points[11], key_points[12], key_points[13])
+        self.r_knee = self.calc_angle(key_points[8], key_points[9], key_points[10])
+
+    def list(self):
+        return [
+            self.r_sho,
+            self.l_sho,
+            self.r_neck_up,
+            self.l_neck_up,
+            self.r_nect_down,
+            self.l_nect_down,
+            self.r_elbo,
+            self.l_elbo,
+            self.l_hip,
+            self.r_hip,
+            self.l_knee,
+            self.r_knee,
+        ]
+
+    def calc_angle(self, p1, p2, p3):
+        pt1 = p1 - p2
+        pt2 = p3 - p2
+        ang1 = np.arctan2(pt1[1], pt1[0])
+        ang2 = np.arctan2(pt2[1], pt2[0])
+        ang = np.rad2deg((ang2 - ang1))
+        ang = np.abs(ang)
+        return ang
+
+
+class PredictResult:
+    def __init__(self, save=False) -> None:
+        self.poses: list[Any] = []
+        self.angles: list[Any] = []
+        if save:
+            self.frames: list[Any] = []
+        self.save = save
+
+    def append(self, poses, angles, img: np.ndarray):
+        if self.save:
+            self.frames.append(img)
+        self.poses.append(poses)
+        self.angles.append(angles)
+
+
 def infer_fast(
     net,
     img,
     net_input_height_size,
     stride,
-    upsample_ratio,
-    cpu,
+    upsample_ratio=4,
     pad_value=(0, 0, 0),
     img_mean=np.array([128, 128, 128], np.float32),
     img_scale=np.float32(1 / 256),
+    cpu=True,
 ):
-    height, width, _ = img.shape
+    height, _, _ = img.shape
     scale = net_input_height_size / height
 
     scaled_img = cv2.resize(
@@ -114,178 +172,73 @@ def infer_fast(
     return heatmaps, pafs, scale, pad
 
 
-def calc_angle(p1, p2, p3):
-    pt1 = p1 - p2
-    pt2 = p3 - p2
-    ang1 = np.arctan2(pt1[1], pt1[0])
-    ang2 = np.arctan2(pt2[1], pt2[0])
-    ang = np.rad2deg((ang2 - ang1))
-    ang = np.abs(ang)
-    # if ang > 360:
-    #     ang = 360 - ang
-    return ang
+def put_text(image, text, position):
+    cv2.putText(
+        image,
+        text,
+        position,
+        cv2.FONT_HERSHEY_COMPLEX,
+        0.5,
+        (0, 0, 255),
+    )
 
 
-def get_angles(key_points):
-    r_sho = calc_angle(key_points[1], key_points[2], key_points[3])
-    l_sho = calc_angle(key_points[1], key_points[5], key_points[6])
-    r_neck_up = calc_angle(key_points[0], key_points[1], key_points[2])
-    l_neck_up = calc_angle(key_points[0], key_points[1], key_points[5])
-    r_nect_down = calc_angle(key_points[2], key_points[1], key_points[8])
-    l_nect_down = calc_angle(key_points[5], key_points[1], key_points[11])
-    r_elbo = calc_angle(key_points[2], key_points[3], key_points[4])
-    l_elbo = calc_angle(key_points[5], key_points[6], key_points[7])
-    l_hip = calc_angle(key_points[1], key_points[11], key_points[12])
-    r_hip = calc_angle(key_points[1], key_points[8], key_points[9])
-    l_knee = calc_angle(key_points[11], key_points[12], key_points[13])
-    r_knee = calc_angle(key_points[8], key_points[9], key_points[10])
-    return [
-        r_sho,
-        l_sho,
-        r_neck_up,
-        l_neck_up,
-        r_nect_down,
-        l_nect_down,
-        r_elbo,
-        l_elbo,
-        l_hip,
-        r_hip,
-        l_knee,
-        r_knee,
-    ]
-
-
-def draw_angles(img, pose, angles):
-    (
-        r_sho,
-        l_sho,
-        r_neck_up,
-        l_neck_up,
-        r_nect_down,
-        l_nect_down,
-        r_elbo,
-        l_elbo,
-        l_hip,
-        r_hip,
-        l_knee,
-        r_knee,
-    ) = angles
+def draw_frame(img, pose, angle: Angle):
     cv2.rectangle(
         img,
         (pose.bbox[0], pose.bbox[1]),
         (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]),
         (0, 255, 0),
     )
-    cv2.putText(
+    put_text(
         img,
-        str(int(r_sho)),
-        pose.keypoints[2],
-        cv2.FONT_HERSHEY_COMPLEX,
-        0.5,
-        (0, 0, 255),
-    )
-
-    cv2.putText(
-        img,
-        str(int(l_sho)),
-        pose.keypoints[5],
-        cv2.FONT_HERSHEY_COMPLEX,
-        0.5,
-        (0, 0, 255),
-    )
-
-    cv2.putText(
-        img,
-        f"{int(r_neck_up)}  {int(l_neck_up)}",
+        f"{int(angle.r_neck_up)}  {int(angle.l_neck_up)}",
         pose.keypoints[1] + [-25, 0],
-        cv2.FONT_HERSHEY_COMPLEX,
-        0.5,
-        (0, 0, 255),
     )
-
-    cv2.putText(
+    put_text(
         img,
-        f"{int(r_nect_down)}  {int(l_nect_down)}  ",
+        f"{int(angle.r_nect_down)}  {int(angle.l_nect_down)}  ",
         pose.keypoints[1] + [-25, 20],
-        cv2.FONT_HERSHEY_COMPLEX,
-        0.5,
-        (0, 0, 255),
     )
-
-    cv2.putText(
-        img,
-        f"{int(r_elbo)}",
-        pose.keypoints[3],
-        cv2.FONT_HERSHEY_COMPLEX,
-        0.5,
-        (0, 0, 255),
-    )
-    cv2.putText(
-        img,
-        f"{int(l_elbo)}",
-        pose.keypoints[6],
-        cv2.FONT_HERSHEY_COMPLEX,
-        0.5,
-        (0, 0, 255),
-    )
-    cv2.putText(
-        img,
-        f"{int(l_hip)}",
-        pose.keypoints[11],
-        cv2.FONT_HERSHEY_COMPLEX,
-        0.5,
-        (0, 0, 255),
-    )
-    cv2.putText(
-        img,
-        f"{int(r_hip)}",
-        pose.keypoints[8],
-        cv2.FONT_HERSHEY_COMPLEX,
-        0.5,
-        (0, 0, 255),
-    )
-    cv2.putText(
-        img,
-        f"{int(l_knee)}",
-        pose.keypoints[12],
-        cv2.FONT_HERSHEY_COMPLEX,
-        0.5,
-        (0, 0, 255),
-    )
-
-    cv2.putText(
-        img,
-        f"{int(r_knee)}",
-        pose.keypoints[9],
-        cv2.FONT_HERSHEY_COMPLEX,
-        0.5,
-        (0, 0, 255),
-    )
+    put_text(img, str(int(angle.r_sho)), pose.keypoints[2])
+    put_text(img, f"{int(angle.r_elbo)}", pose.keypoints[3])
+    put_text(img, str(int(angle.l_sho)), pose.keypoints[5])
+    put_text(img, f"{int(angle.l_elbo)}", pose.keypoints[6])
+    put_text(img, f"{int(angle.r_hip)}", pose.keypoints[8])
+    put_text(img, f"{int(angle.r_knee)}", pose.keypoints[9])
+    put_text(img, f"{int(angle.l_hip)}", pose.keypoints[11])
+    put_text(img, f"{int(angle.l_knee)}", pose.keypoints[12])
 
 
-def predict_ret_pose_frame(
-    net, image_provider, cpu=False, track=False, smooth=False, display=False, save=False
-):
-    net = net.eval()
-    if not cpu:
-        net = net.cuda()
-    # height_size = 256
+def display_frame(img: np.ndarray):
+    pyplot.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    pyplot.show(block=False)
+    pyplot.pause(0.00001)
+    pyplot.clf()
+
+
+def predict_pose(
+    image_provider, track=False, smooth=False, display=False, save=False
+) -> PredictResult:
+    """_summary_ predict post shape
+
+    Returns:
+        list[np.ndarray] : listof keyPoints
+        list[flaot] : listof angles
+        list[np.ndarray] : listof frame that angle annotated
+    """
     height_size = 128
     stride = 8
     upsample_ratio = 4
     num_keypoints = Pose.num_kpts
-    previous_poses = []
-    predicted_frames = []
-    predicted_poses = []
-    predicted_angles = []
+    previous_poses: list[Any] = []
+    result = PredictResult(save)
     for img in image_provider:
         orig_img = img.copy()
-        heatmaps, pafs, scale, pad = infer_fast(
-            net, img, height_size, stride, upsample_ratio, cpu
-        )
+        heatmaps, pafs, scale, pad = infer_fast(POST_NET, img, height_size, stride)
 
         total_keypoints_num = 0
-        all_keypoints_by_type = []
+        all_keypoints_by_type: list[Any] = []
         for kpt_idx in range(num_keypoints):  # 19th for bg
             total_keypoints_num += extract_keypoints(
                 heatmaps[:, :, kpt_idx], all_keypoints_by_type, total_keypoints_num
@@ -312,17 +265,15 @@ def predict_ret_pose_frame(
                     pose_keypoints[kpt_id, 1] = int(
                         all_keypoints[int(pose_entries[n][kpt_id]), 1]
                     )
-            pose = Pose(pose_keypoints, pose_entries[n][18])
-            current_poses.append(pose)
+            current_poses.append(Pose(pose_keypoints, pose_entries[n][18]))
 
-        poses = []
-        angles = []
+        poses, angles = [], []
         for pose in current_poses:
-            cur_angles = get_angles(pose.keypoints)
-            angles.append(cur_angles)
+            cur_angles = Angle(pose.keypoints)
+            angles.append(cur_angles.list())
 
             if display or save:
-                draw_angles(img, pose, cur_angles)
+                draw_frame(img, pose, cur_angles)
             if save:
                 poses.append(pose.keypoints.tolist())
 
@@ -336,41 +287,33 @@ def predict_ret_pose_frame(
             for pose in current_poses:
                 pose.draw(img)
             img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
-
-        predicted_frames.append(img)
-        predicted_poses.append(poses)
-        predicted_angles.append(angles)
-        if display:
-            cur = img.copy()
-            cv2.cvtColor(cur, cv2.COLOR_BGR2RGB, cur)
-            pyplot.imshow(cur)
-            pyplot.show(block=False)
-            pyplot.pause(0.00001)
-            pyplot.clf()
-    return predicted_poses, predicted_angles, predicted_frames
+            if display:
+                display_frame(img)
+        result.append(poses, angles, img)
+    return result
 
 
-def save_result(args, video_mode, poses, angles, frames):
-    outPath = "./out"
+def save_result(args, video_mode, result: PredictResult):
     if not video_mode:
         name = args.images[0].split("/")[-1]
         name = ".".join(name.split(".")[:-1])
-        out_file_name = "out_" + name[-1]
-        cv2.imwrite(path.join(outPath + out_file_name + ".jpg"), frames[0])
+        out_file_name = "./out_" + name[-1]
+        cv2.imwrite(path.join(out_file_name + ".jpg"), result.frames[0])
         with open(out_file_name + ".json", "w") as f:
-            json.dump(poses, f)
+            json.dump(result.poses, f)
         with open(out_file_name + ".json", "w") as f:
-            json.dump(angles, f)
+            json.dump(result.angles, f)
         return
     file_name = args.video
     try:
+        name = file_name
         file_name = int(file_name)
     except:
         name = file_name.split("/")[-1]
         name = ".".join(name.split(".")[:-1])
-        out_file_name = "out" + name
 
     finally:
+        out_file_name = "./out" + name
         cap = cv2.VideoCapture(file_name)
         out = cv2.VideoWriter(
             out_file_name + ".mp4",
@@ -381,20 +324,22 @@ def save_result(args, video_mode, poses, angles, frames):
                 int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
             ),
         )
-        for frame in frames:
+        for frame in result.frames:
             out.write(frame)
         out.release()
         with open(out_file_name + ".json", "w") as f:
-            json.dump(poses, f)
+            json.dump(result.poses, f)
         with open(out_file_name + ".json", "w") as f:
-            json.dump(angles, f)
+            json.dump(result.angles, f)
 
 
 if __name__ == "__main__":
     import argparse
     import json
-    from os import path
 
+    from matplotlib import pyplot
+
+    # region parse cli arg
     parser = argparse.ArgumentParser(
         description="""Lightweight human pose estimation python demo.
                        This is just for quick results preview.
@@ -406,19 +351,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--video", type=str, default="", help="path to video file or camera id"
     )
-    parser.add_argument(
-        "--cpu", action="store_true", help="run network inference on cpu"
-    )
     parser.add_argument("--save", action="store_true", help="save predicted result")
     parser.add_argument(
         "--display", action="store_true", help="display predicted result"
     )
     parser.add_argument("--track", type=int, default=1, help="track pose id in video")
     parser.add_argument("--smooth", type=int, default=1, help="smooth pose keypoints")
-    args = parser.parse_args()
-    if args.display:
-        from matplotlib import pyplot
-    if args.video == "" and args.images == "":
+    # endregion
+    if (args := parser.parse_args()).video == "" and args.images == "":
         raise ValueError("Either --video or --image has to be provided")
 
     video_mode = False
@@ -428,14 +368,12 @@ if __name__ == "__main__":
         video_mode = True
         frame_provider = VideoReader(args.video)
 
-    poses, angles, frames = predict_ret_pose_frame(
-        POST_NET,
+    result = predict_pose(
         frame_provider,
-        args.cpu,
         args.track,
         args.smooth,
         args.display,
         args.save,
     )
     if args.save:
-        save_result(args, video_mode, poses, angles, frames)
+        save_result(args, video_mode, result)

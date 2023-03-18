@@ -1,16 +1,12 @@
 import numpy as np
-from numpy import dot
-from numpy.linalg import norm
 
-from .predict import POST_NET, ImageReader, predict_ret_pose_frame
-
-
+from .predict import POST_NET, ImageReader, predict_pose
 
 
 def map_norm_item(item_list):
     ret = []
     for item in item_list:
-        ret.append({"value": item, "norm": norm(item)})
+        ret.append({"value": item, "norm": np.linalg.norm(item)})
     return ret
 
 
@@ -22,19 +18,20 @@ def cos_sim(a, b):
     for a in a_nalue_norm:
         for b in b_nalue_norm:
             sim = np.divide(
-                dot(a["value"], b["value"]), np.multiply(a["norm"], b["norm"])
+                np.dot(a["value"], b["value"]), np.multiply(a["norm"], b["norm"])
             )
             if sim > max_sim:
                 max_sim = sim
     return max_sim
 
 
-def compare(image1, image2, isfile=False):
+def compare(image1: np.ndarray, image2: np.ndarray, isfile=False):
+    """calc simirarity from 2 np images"""
     frame_provider = ImageReader([image1], isfile=isfile)
-    _, angles, _ = predict_ret_pose_frame(POST_NET, frame_provider, cpu=True)
+    angle0 = predict_pose(POST_NET, frame_provider, cpu=True).angles[0]
     frame_provider2 = ImageReader([image2], isfile=isfile)
-    _, angles_2, _ = predict_ret_pose_frame(POST_NET, frame_provider2, cpu=True)
-    cos = cos_sim(angles[0], angles_2[0])
+    angle1 = predict_pose(POST_NET, frame_provider2, cpu=True).angles[0]
+    cos = cos_sim(angle0, angle1)
     return cos
 
 
