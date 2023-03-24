@@ -7,8 +7,7 @@ class UserModelSerializer(serializers.ModelSerializer):
     
     class Meta:
         model=UserModel
-        fields=["__all__"]
-        exclude=["pwd","salt"]
+        exclude=["pwd"]
         
     
     

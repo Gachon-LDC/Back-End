@@ -8,6 +8,8 @@ from django.http import HttpRequest
 from App.utils.errors import HttpError, HTTPStatus
 import uuid
 from django.contrib.auth.hashers import make_password, check_password
+from django.core.serializers.json import DjangoJSONEncoder
+import json
 
 #uid의 해당 row값을 리턴
 async def get_by_uid(uid) -> UserModel:
@@ -17,11 +19,12 @@ async def get_by_uid(uid) -> UserModel:
         raise HttpError(HTTPStatus.NOT_FOUND)
     
 #email의 해당 row값을 리턴
-async def get_by_email(email) -> UserModel:
+async def get_by_email(email): 
     try:
-        return await UserModel.objects.get(email = email)
-    except:
-        raise HttpError(HTTPStatus.NOT_FOUND)
+        row = UserModel.objects.get(email = email)
+        return row
+    except UserModel.DoesNotExist:
+        return False
     
 
 #해당 uid의 row값을 삭제
@@ -37,7 +40,7 @@ async def serialize():
     return json
 
 #UserModel의 필드에서 uid가 일치하는 row값을 JSON으로 리턴해줌
-async def serialize_uid(req):
+async def serialize_user(req):
     data = JSONParser().parse(req)
     query_set = await get_by_uid(data.get('uid'))
     if query_set.DoesNotExist:
@@ -59,21 +62,34 @@ async def user_register(req):
     newUserModel.email = email
     newUserModel.pwd = pwd
     
-    newUserModel.save()
+    check_result = UserModel.objects.filter(email = newUserModel.email)
+
+    if check_result.exists():
+        return HttpResponse("이미 존재하는 계정입니다.", status=404)
+    else:
+        newUserModel.save()
+        return HttpResponse("계정 생성 성공", status=201)
     
 #회원탈퇴시
 async def user_withdraw(req):
-    if await check_user(req):
-        data = JSONParser().parse(req)
-        email = data.get('email')
-        row = await get_by_email(email)
+    data = JSONParser().parse(req)
+    email = data.get('email')
+    row = await get_by_email(email)
+    if row == False:
+        return False
+    
+    print(row.pwd)
+    print(data.get('pwd'))
+    
+    if check_password(data.get('pwd'), row.pwd):
         row.delete()
-        
-        return JsonResponse("회원탈퇴성공",status=201)
+        return True
     else:
-        return HttpResponse(404)
+        return False
 
 #email과 pwd로 계정 확인
+#2중 데이터베이스 접근 문제가 있어서 확인중
+#현재 쓰고 있지 않음.
 async def check_user(req):
     data = JSONParser().parse(req)
     _email = data.get('email')
@@ -81,22 +97,45 @@ async def check_user(req):
     
     #_email로 계정을 들고온 후 비밀번호 확인
     row = await get_by_email(_email)
-    if row.DoesNotExist:
+    if row==False:
         return JsonResponse('해당 email이 존재하지 않습니다.',status=404)
     if not check_password(row.pwd,_pwd):
         return True
     else:
         return False
     
-#해당유저를 이메일로 찾고 req의 session에 uid 값을 저장
-async def session_save_uid(req:HttpRequest):
-    data = JSONParser.parse(req)
-    row = UserModel.objects.get(email = data.get('email'))
-    req.session['user'] = row.uid
+#req의 session에 user의 uid 값을 저장
+def session_save_uid(req:HttpRequest, user):
+    user_dict = {
+        'uid' : user.uid,
+        'email' : user.email,
+        'pwd' : user.pwd,
+    }
+    
+    my_json = json.dumps(user_dict,cls=DjangoJSONEncoder)
+    
+    my_dict = json.loads(my_json)
+    uid = my_dict['uid']
+    req.session['user'] = uid
     
     
 #해당유저의 req의 session을 빈자리로 만듬.
-async def session_delete_uid(req:HttpRequest):
+def session_delete_uid(req:HttpRequest):
+    print(req.session['user'])
     req.session['user'] = ''
+    print(req.session['user'])
+    
+#해당 유저가 현재 로그인이 되어있는지 확인.
+def check_log_in(req):
+    if req.session['user']=='':
+        return False
+    else:
+        True
     
     
+def check_email(row_email, email):
+    if row_email==email:
+        return True
+    else:
+        return False
+        

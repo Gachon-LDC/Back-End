@@ -6,35 +6,37 @@ from App.models import UserModel
 from App.serializers import UserModelSerializer
 from django.http import HttpRequest
 from App.utils.errors import HttpError, HTTPStatus, HttpErrorHandling
-from App.services.auth_service import *
+from App.services import auth_service
+from django.contrib.auth.hashers import check_password
 
 
-@HttpErrorHandling
 # 로그인 관련 Controller
-def auth_controller(req):
+@HttpErrorHandling
+async def auth_controller(req):
     if req.method == "GET":
-        return get_signed_user(req)
+        return await get_signed_user(req)
         
     # etc...
     #if req.method =="PUT":
     #    return register(req)
     
     if req.method == "POST":
-        return sign_in(req)
+        return await sign_in(req)
     
     if req.method == "DELETE":
-        return log_out(req)
+        return await log_out(req)
 
     if req.method=="_":
         raise HttpError(HTTPStatus.NOT_FOUND)
 
 #회원가입 컨트롤러
-def auth_register_controller(req):
+@HttpErrorHandling
+async def auth_register_controller(req):
     if req.method == "POST":
-        return register(req)
+        return await sign_up(req)
     
     if req.method == "DELETE":
-        return sign_out(req)
+        return await sign_out(req)
     
     if req.method=="_":
         raise HttpError(HTTPStatus.NOT_FOUND)
@@ -43,32 +45,41 @@ def auth_register_controller(req):
 async def get_signed_user(req:HttpRequest):
     if req.session.get('user',False):
         uid = req.session.get('user',False)
-        return get_by_uid(uid)
+        return auth_service.get_by_uid(uid)
     else :
-        return JsonResponse("현재 로그인되어 있지 않습니다.",status = 404)
+        return HttpResponse("현재 로그인되어 있지 않습니다.",status = 404)
 
 # POST 로그인
 async def sign_in(req:HttpRequest):
-    if await check_user(req):
-        await session_save_uid(req)
+    data = JSONParser().parse(req)
+    user = await auth_service.get_by_email(data.get('email'))
+    
+    if user==False:
+        return HttpResponse("메일과 일치하는 계정이 없습니다.", status = 404)
+    
+    if check_password(data.get('pwd'), user.pwd):
+        auth_service.session_save_uid(req,user)
+        return HttpResponse("로그인 성공.",status=201)
         
-        #여기에 해당 웹 페이지로 이동
-        
-        #여기서 원하는 페이지로 이동 시킨다.
+        #위에거 지우고 여기에 해당 웹 페이지로 이동코드 작성
     else:
-        return JsonResponse("일치하는 계정이 없습니다.", status = 404)
+        return HttpResponse("비밀번호가 틀렸습니다.", status = 404)
 
 #로그 아웃
 async def log_out(req:HttpRequest):
-    await session_delete_uid(req)
-    return JsonResponse("로그아웃 성공", status = 201)
+    if req.session['user']!='':
+        return HttpResponse("이미 로그아웃 되어 있습니다. 잘못된 접근입니다.",status=404)
+    auth_service.session_delete_uid(req)
+    return HttpResponse("로그아웃 성공", status = 201)
     
-# PUT?? 회원 등록#POST로 수정해서 들고오기
-async def register(req):
-    await user_register(req)
-    return JsonResponse("계정 생성 성공", status=201)
+#POST로 수정해서 들고오기
+async def sign_up(req):
+    return await auth_service.user_register(req)
 
 
 # DELETE 회원 탈퇴//로그 아웃
-async def sign_out(req):
-    return await user_withdraw(req)
+async def sign_out(req): 
+    if await auth_service.user_withdraw(req):
+        return HttpResponse("회원탈퇴성공",status=201)
+    else:
+        return HttpResponse("회원탈퇴실패",404)
