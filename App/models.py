@@ -6,17 +6,17 @@ from django.db.models import (
     ForeignKey,
 )
 from django.db import models
+import uuid
 
 
 class UserModel(Model):
-    uid = UUIDField(primary_key=True)
+    uid = UUIDField(primary_key=True,default = uuid.uuid4)
     email = TextField()
     pwd = TextField()
-    salt = TextField()
 
 
 class DanceCategoryModel(Model):
-    uid = UUIDField(primary_key=True)
+    uid = UUIDField(primary_key=True,default = uuid.uuid4)
     title = TextField()
 
 
@@ -24,7 +24,7 @@ class DanceCategoryModel(Model):
 class VideoModel(Model):
     """file path : static/video/UID"""
 
-    video_id = UUIDField(primary_key=True)
+    video_id = UUIDField(primary_key=True,default = uuid.uuid4)
     uploader_id = ForeignKey(
         UserModel, on_delete=models.SET_NULL, null=True
     )  # many to one @ User.uid,
@@ -37,7 +37,7 @@ class VideoModel(Model):
 
 
 class CommentModel(Model):
-    uid = UUIDField(primary_key=True)
+    uid = UUIDField(primary_key=True,default = uuid.uuid4)
     videoId = ForeignKey(VideoModel, on_delete=models.CASCADE)
     writerId = ForeignKey(UserModel, on_delete=models.CASCADE)
     content = TextField()
