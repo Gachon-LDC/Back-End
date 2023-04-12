@@ -20,7 +20,7 @@ class HttpError(Exception):
             self.status = http_status
 
     def response(self):
-        HttpResponse(self.msg, status=self.status)
+        return HttpResponse(self.msg, status=self.status)
 
 
 def HttpErrorHandling(func):

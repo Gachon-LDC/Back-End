@@ -8,4 +8,4 @@ class IController(View):
         try:
             return await super().dispatch(request, *args, **kwargs)
         except HttpError as e:
-            return e.response
+            return e.response()
