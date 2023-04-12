@@ -14,14 +14,13 @@ class UserModelSerializer(serializers.ModelSerializer):
 
 class VideoModelSerializer(serializers.ModelSerializer):
     video_id = serializers.UUIDField(required=False)
-    uploader_id = serializers.PrimaryKeyRelatedField(read_only=True)
-    dance = serializers.PrimaryKeyRelatedField(read_only=True)
+    uploader_id = serializers.UUIDField(read_only=True, required=False)
+    dance = serializers.UUIDField(read_only=True, required=False)
     fps = serializers.IntegerField(required=False)
     file = serializers.FileField(required=False)
 
     class Meta:
         model = VideoModel
-        fields = ["__all__"]
-        exclude = ["embeds"]
+        fields = "__all__"
 
     pass

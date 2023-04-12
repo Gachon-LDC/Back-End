@@ -28,7 +28,7 @@ class VideoModel(Model):
     uploader_id = UUIDField()  # many to one @ User.uid,
     title = TextField()
 
-    dance = ForeignKey(DanceCategoryModel, on_delete=models.PROTECT)
+    dance = UUIDField()
     fps = IntegerField()
     content = TextField(default="")
 
