@@ -25,15 +25,18 @@ class VideoModel(Model):
     """file path : static/video/UID"""
 
     video_id = UUIDField(primary_key=True)
-    uploader_id = ForeignKey(
-        UserModel, on_delete=models.SET_NULL, null=True
-    )  # many to one @ User.uid,
+    uploader_id = UUIDField()  # many to one @ User.uid,
     title = TextField()
 
-    embeds = TextField()
     dance = ForeignKey(DanceCategoryModel, on_delete=models.PROTECT)
     fps = IntegerField()
-    content = TextField()
+    content = TextField(default="")
+
+
+class VideoAngleModel(Model):
+    angle_id = UUIDField(primary_key=True)
+    embeds = TextField()
+    video_id = UUIDField()
 
 
 class CommentModel(Model):
