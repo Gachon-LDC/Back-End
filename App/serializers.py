@@ -16,7 +16,6 @@ class VideoModelSerializer(serializers.ModelSerializer):
     video_id = serializers.UUIDField(required=False)
     uploader_id = serializers.UUIDField(read_only=True, required=False)
     dance = serializers.UUIDField(read_only=True, required=False)
-    fps = serializers.IntegerField(required=False)
     file = serializers.FileField(required=False)
 
     class Meta:

@@ -7,6 +7,7 @@ from App.models import VideoModel, VideoAngleModel
 from App.serializers import VideoModelSerializer
 from uuid import uuid4, UUID
 import threading
+import cv2
 
 
 async def get_by_id(pk) -> VideoModel:
@@ -47,11 +48,15 @@ def save_predicted_video(video: VideoModel, file):
     file_name = save_files("video", video.video_id, "mp4", file)
     video_reader = VideoReader(file_name)
     result = predict_pose(video_reader)
+
+    cap = cv2.VideoCapture(file_name)
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
     angle_model = VideoAngleModel()
     angle_model.video_id = video.video_id
     angle_model.embeds = result.angles
+    angle_model.fps = fps
     angle_model.save()
-    print("saved")
     pass
 
 
@@ -60,11 +65,9 @@ async def save_video(
 ):
     if isinstance(new_video, VideoModelSerializer):
         new_video = VideoModel(**new_video.data)
-
     new_video.video_id = uuid4()
     new_video.uploader_id = uploader_id
     new_video.dance = uuid4()
-    print(model_to_dict(new_video))
     try:
         await new_video.asave()
         thread = threading.Thread(target=save_predicted_video, args=(new_video, file))

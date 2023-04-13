@@ -29,13 +29,13 @@ class VideoModel(Model):
     title = TextField()
 
     dance = UUIDField()
-    fps = IntegerField()
     content = TextField(default="")
 
 
 class VideoAngleModel(Model):
     embeds = TextField()
     video_id = UUIDField(primary_key=True)
+    fps = IntegerField()
 
 
 class CommentModel(Model):
