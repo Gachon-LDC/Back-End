@@ -34,9 +34,8 @@ class VideoModel(Model):
 
 
 class VideoAngleModel(Model):
-    angle_id = UUIDField(primary_key=True)
     embeds = TextField()
-    video_id = UUIDField()
+    video_id = UUIDField(primary_key=True)
 
 
 class CommentModel(Model):
