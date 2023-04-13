@@ -19,6 +19,8 @@ djangorestframework = "*"
 django-cors-headers = "*"
 pandas = "*"
 gunicorn = "*"
+aiofiles = "*"
+asgiref = "*"
 
 [dev-packages]
 mypy = "*"

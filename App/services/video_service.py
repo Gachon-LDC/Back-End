@@ -1,6 +1,12 @@
+from django.forms.models import model_to_dict
+from django.db import IntegrityError
+from App.services.model_predict import predict_pose, VideoReader
 from App.utils.errors import HttpError, HTTPStatus
-from App.models import VideoModel
+from App.utils.utils import save_files
+from App.models import VideoModel, VideoAngleModel
 from App.serializers import VideoModelSerializer
+from uuid import uuid4, UUID
+import threading
 
 
 async def get_by_id(pk) -> VideoModel:
@@ -37,15 +43,35 @@ async def update_video(
     video.save()
 
 
-def save_video(new_video: VideoModel | VideoModelSerializer):
-    # TODO: check UUID is automatically generated?
-    new_video.save()
-    # TODO : save video file
-    # save file
+def save_predicted_video(video: VideoModel, file):
+    file_name = save_files("video", video.video_id, "mp4", file)
+    video_reader = VideoReader(file_name)
+    result = predict_pose(video_reader)
+    angle_model = VideoAngleModel()
+    angle_model.video_id = video.video_id
+    angle_model.embeds = result.angles
+    angle_model.save()
+    print("saved")
+    pass
 
-    # return video full information
 
-    seralizer = VideoModelSerializer(new_video)
-    seralizer.is_valid()
+async def save_video(
+    uploader_id: UUID, new_video: VideoModel | VideoModelSerializer, file
+):
+    if isinstance(new_video, VideoModelSerializer):
+        new_video = VideoModel(**new_video.data)
 
-    return seralizer.validated_data
+    new_video.video_id = uuid4()
+    new_video.uploader_id = uploader_id
+    new_video.dance = uuid4()
+    print(model_to_dict(new_video))
+    try:
+        await new_video.asave()
+        thread = threading.Thread(target=save_predicted_video, args=(new_video, file))
+        thread.start()
+        deseralizer = VideoModelSerializer(new_video)
+        return deseralizer.data
+    except IntegrityError:
+        raise HttpError(
+            HTTPStatus.INTERNAL_SERVER_ERROR, "Retry Required (uuid conflict)"
+        )

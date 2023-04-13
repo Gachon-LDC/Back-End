@@ -6,6 +6,7 @@ from App.utils.utils import int_or_0
 from App.utils.errors import HttpError
 from App.utils.IController import IController
 from App.services.video_service import save_video
+from asgiref.sync import sync_to_async
 import uuid
 
 
@@ -16,31 +17,30 @@ class VideoController(IController):
 
     http_method_names = ["get", "post"]
 
-    async def get(self, req: HttpRequest):
+    @sync_to_async
+    def get(self, req: HttpRequest):
         """_summary_ get VideoList
         ### Params
         offset : Optional[int]
         limit : Optional[int]
         """
         offset = int_or_0(req.GET.get("offset"))
-        limit = int_or_0(req.GET.get("limit", 10))
-
-        videos = VideoModel.objects.all()[offset:limit]
-
+        limit = max([10, int_or_0(req.GET.get("limit", 10))])
+        videos = VideoModel.objects.all()[offset : offset + limit]
         serailized = VideoModelSerializer(videos, many=True)
         return JsonResponse(serailized.data, safe=False)
 
-    async def post(req: HttpRequest):
+    async def post(self, req: HttpRequest):
         """
         _summary_ Update Video Info
-        Method: POST
         """
-        video = VideoModelSerializer(data=req.body)
+        video = VideoModelSerializer(data={key: req.POST[key] for key in req.POST})
+        video_file = req.FILES.get("file")
         if not video.is_valid():
             raise HttpError(status.HTTP_422_UNPROCESSABLE_ENTITY)
-        video.uploader_id = uuid.uuid4()
-        video.video_id = uuid.uuid4()
-        req.FILES.getlist("video")
-        saved = await save_video(video)
+        if video_file.content_type != "video/mp4":
+            raise HttpError(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+        # TODO: get authorized userid
+        saved = await save_video(uuid.uuid4(), video, video_file)
 
-        return JsonResponse(saved, ensure_ascii=True)
+        return JsonResponse(saved)
