@@ -1,12 +1,11 @@
-from django.forms.models import model_to_dict
 from django.db import IntegrityError
 from App.services.model_predict import predict_pose, VideoReader
 from App.utils.errors import HttpError, HTTPStatus
-from App.utils.utils import save_files
+from App.utils.utils import FilePath
 from App.models import VideoModel, VideoAngleModel
 from App.serializers import VideoModelSerializer
 from uuid import uuid4, UUID
-import threading
+from threading import Thread
 import cv2
 
 
@@ -27,8 +26,13 @@ async def delete_by_id(pk, user_id: str):
     """(async) delete video by id"""
     video = await get_by_id(pk)
     is_writer_or_403(user_id, video)
-    video.delete()
-    # TODO: delete from F/S
+    video_del = video.adelete()
+    angle = await VideoAngleModel.objects.aget(pk=pk)
+    angle_del = angle.adelete()
+    file = FilePath("video", pk, "mp4")
+    file.delete_thread()
+    await video_del
+    await angle_del
 
 
 async def update_video(
@@ -45,11 +49,12 @@ async def update_video(
 
 
 def save_predicted_video(video: VideoModel, file):
-    file_name = save_files("video", video.video_id, "mp4", file)
-    video_reader = VideoReader(file_name)
+    file_path = FilePath("video", video.video_id, "mp4")
+    file_path.save(file)
+    video_reader = VideoReader(file_path.name)
     result = predict_pose(video_reader)
 
-    cap = cv2.VideoCapture(file_name)
+    cap = cv2.VideoCapture(file_path.name)
     fps = cap.get(cv2.CAP_PROP_FPS)
 
     angle_model = VideoAngleModel()
@@ -70,7 +75,7 @@ async def save_video(
     new_video.dance = uuid4()
     try:
         await new_video.asave()
-        thread = threading.Thread(target=save_predicted_video, args=(new_video, file))
+        thread = Thread(target=save_predicted_video, args=(new_video, file))
         thread.start()
         deseralizer = VideoModelSerializer(new_video)
         return deseralizer.data
