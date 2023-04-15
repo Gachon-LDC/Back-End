@@ -32,7 +32,11 @@ class VideoController(IController):
 
     async def post(self, req: HttpRequest):
         """
-        _summary_ Update Video Info
+        _summary_ Upload Video
+
+        req.body : multipart/form-data
+        req.FILE["file"] : file - video file
+
         """
         video = VideoModelSerializer(data={key: req.POST[key] for key in req.POST})
         video_file = req.FILES.get("file")
