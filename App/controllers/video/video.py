@@ -2,10 +2,9 @@ from django.http import HttpRequest, JsonResponse
 from rest_framework import status
 from App.models import VideoModel
 from App.serializers import VideoModelSerializer
-from App.utils.utils import int_or_0
+from App.utils import int_or_0, IController
 from App.utils.errors import HttpError
-from App.utils.IController import IController
-from App.services.video_service import save_video
+from App.services import video_service
 from asgiref.sync import sync_to_async
 import uuid
 
@@ -45,6 +44,6 @@ class VideoController(IController):
         if video_file.content_type != "video/mp4":
             raise HttpError(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
         # TODO: get authorized userid
-        saved = await save_video(uuid.uuid4(), video, video_file)
+        saved = await video_service.save_video(uuid.uuid4(), video, video_file)
 
         return JsonResponse(saved)

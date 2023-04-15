@@ -1,10 +1,8 @@
 from django.urls import path
-from .video import VideoController
-from .learn import learn_controller
-from .content import ContentController
+from . import VideoController, LearnController, ContentController
 
 urlpatterns = [
     path("", VideoController.as_view()),
     path("/<str:video_id>", ContentController.as_view()),
-    path("/<str:video_id>/learn/", learn_controller),
+    path("/<str:video_id>/learn", LearnController.as_view()),
 ]
