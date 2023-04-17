@@ -9,9 +9,7 @@ from django.http import HttpResponse
 
 async def get_by_id(uid) -> DanceCategoryModel:
     try:
-        print(uid)
         row = DanceCategoryModel.objects.get(uid=uid)
-        print(row)
         return row
     except:
         raise HttpError(HTTPStatus.NOT_FOUND)

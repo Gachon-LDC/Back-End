@@ -41,7 +41,6 @@ async def get_categories(req):
     else:
         #serializer = DanceCategoryModelSerializer(rows)
         json_data = serializers.serialize('json', rows)
-        print(json_data)
         return HttpResponse(json_data,status=201,content_type = "application/json")
 
 
@@ -52,7 +51,7 @@ async def get_videos_by_category(req, uid):
     if(row==None): return HttpError("카테고리가 존재하지 않습니다.")
     else:
         #serializer = DanceCategoryModelSerializer(row)
-        json_data = serializers.serialize('json', row)
+        json_data = serializers.serialize('json', [row])
         return HttpResponse(json_data,status=201,content_type = "application/json")
 
 
