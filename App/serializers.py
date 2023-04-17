@@ -17,7 +17,7 @@ class CommentModelSerializer(serializers.ModelSerializer):
     uid = serializers.UUIDField(required=False)
     videoId = serializers.UUIDField(required=False)
     writerId = serializers.UUIDField(required=False)
-    content = serializers.CharField(required=False)
+    content = serializers.CharField(required=True)
 
     class Meta:
         model = CommentModel

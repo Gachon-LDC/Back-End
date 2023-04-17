@@ -5,8 +5,8 @@ from App.models import UserModel
 class SessionUser:
     def __init__(self, uid: str, email: str):
         assert uid != "", "uid is empty"
-        self.uid: str | None = uid
-        self.email: str | None = email
+        self.uid: str = uid
+        self.email: str = email
 
     def save(self, session):
         session["uid"] = self.uid
