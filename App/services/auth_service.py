@@ -115,7 +115,7 @@ def sign_in(req: HttpRequest, user: UserModel, pwd: str) -> SessionUser:
         raise HttpError(HTTPStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.")
     session_user = SessionUser.fromUser(user)
     session_user.save(req.session)
-    return user
+    return session_user
 
 
 # 해당유저의 req의 session을 빈자리로 만듬.

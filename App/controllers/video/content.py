@@ -2,7 +2,6 @@ from django.http import HttpRequest, JsonResponse, HttpResponse
 from App.serializers import VideoModelSerializer
 
 from App.services import video_service
-from App.utils.errors import HttpErrorHandling, HttpError, HTTPStatus
 from App.utils.IController import IController
 
 
@@ -11,7 +10,7 @@ class ContentController(IController):
     url : /video/[video_id]
     """
 
-    http_method_names = ["get", "post", "delete", "put", 'patch']
+    http_method_names = ["get", "post", "delete", "put", "patch"]
 
     async def get(self, _: HttpRequest, video_id: str):
         """_summary_ GET controller
