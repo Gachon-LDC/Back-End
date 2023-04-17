@@ -8,7 +8,8 @@ from django.http import HttpRequest
 from App.utils.errors import HttpError, HTTPStatus, HttpErrorHandling
 from App.services import auth_service
 from django.contrib.auth.hashers import check_password
-
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 # 로그인 관련 Controller
 @HttpErrorHandling
@@ -37,16 +38,21 @@ async def auth_register_controller(req):
     
     if req.method == "DELETE":
         return await sign_out(req)
-    
+
     if req.method=="_":
         raise HttpError(HTTPStatus.NOT_FOUND)
 
 # GET User의 정보를 얻음
 async def get_signed_user(req:HttpRequest):
-    if req.session.get('user',False):
-        uid = req.session.get('user',False)
-        return auth_service.get_by_uid(uid)
-    else :
+    if req.session.get('user'):
+        uid = req.session.get('user')
+        row = await auth_service.get_by_uid(uid)
+        print(row)
+        serializer =UserModelSerializer(row)
+        #result = json.dumps(row,cls=DjangoJSONEncoder)
+        print(serializer)
+        return HttpResponse(serializer,status=201,content_type = "application/json")
+    else:
         return HttpResponse("현재 로그인되어 있지 않습니다.",status = 404)
 
 # POST 로그인
@@ -67,7 +73,7 @@ async def sign_in(req:HttpRequest):
 
 #로그 아웃
 async def log_out(req:HttpRequest):
-    if req.session['user']!='':
+    if req.session['user']=='':
         return HttpResponse("이미 로그아웃 되어 있습니다. 잘못된 접근입니다.",status=404)
     auth_service.session_delete_uid(req)
     return HttpResponse("로그아웃 성공", status = 201)

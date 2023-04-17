@@ -14,7 +14,7 @@ import json
 #uid의 해당 row값을 리턴
 async def get_by_uid(uid) -> UserModel:
     try:
-        return await UserModel.objects.get(uid = uid)
+        return UserModel.objects.get(uid = uid)
     except:
         raise HttpError(HTTPStatus.NOT_FOUND)
     
@@ -90,19 +90,19 @@ async def user_withdraw(req):
 #email과 pwd로 계정 확인
 #2중 데이터베이스 접근 문제가 있어서 확인중
 #현재 쓰고 있지 않음.
-async def check_user(req):
-    data = JSONParser().parse(req)
-    _email = data.get('email')
-    _pwd = data.get('pwd')
+# async def check_user(req):
+#     data = JSONParser().parse(req)
+#     _email = data.get('email')
+#     _pwd = data.get('pwd')
     
-    #_email로 계정을 들고온 후 비밀번호 확인
-    row = await get_by_email(_email)
-    if row==False:
-        return JsonResponse('해당 email이 존재하지 않습니다.',status=404)
-    if not check_password(row.pwd,_pwd):
-        return True
-    else:
-        return False
+#     #_email로 계정을 들고온 후 비밀번호 확인
+#     row = await get_by_email(_email)
+#     if row==False:
+#         return JsonResponse('해당 email이 존재하지 않습니다.',status=404)
+#     if not check_password(row.pwd,_pwd):
+#         return True
+#     else:
+#         return False
     
 #req의 session에 user의 uid 값을 저장
 def session_save_uid(req:HttpRequest, user):
@@ -126,11 +126,11 @@ def session_delete_uid(req:HttpRequest):
     print(req.session['user'])
     
 #해당 유저가 현재 로그인이 되어있는지 확인.
-def check_log_in(req):
+def check_log_in(req:HttpRequest):
     if req.session['user']=='':
         return False
     else:
-        True
+        return True
     
     
 def check_email(row_email, email):
@@ -138,4 +138,5 @@ def check_email(row_email, email):
         return True
     else:
         return False
+
         

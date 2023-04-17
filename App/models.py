@@ -25,11 +25,12 @@ class VideoModel(Model):
     """file path : static/video/UID"""
 
     video_id = UUIDField(primary_key=True,default = uuid.uuid4)
+    
     uploader_id = ForeignKey(
         UserModel, on_delete=models.SET_NULL, null=True
     )  # many to one @ User.uid,
+    
     title = TextField()
-
     embeds = TextField()
     dance = ForeignKey(DanceCategoryModel, on_delete=models.PROTECT)
     fps = IntegerField()

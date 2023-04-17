@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from App.models import VideoModel
 from App.models import UserModel
+from App.models import CommentModel
+from App.models import DanceCategoryModel
 
 class UserModelSerializer(serializers.ModelSerializer):
     uid=serializers.UUIDField(required=False)
@@ -9,8 +11,24 @@ class UserModelSerializer(serializers.ModelSerializer):
         model=UserModel
         exclude=["pwd"]
         
+
+class CommentModelSerializer(serializers.ModelSerializer):
+    uid = serializers.UUIDField(required=False)
+    videoId = serializers.PrimaryKeyRelatedField(read_only=True)
+    writerId = serializers.PrimaryKeyRelatedField(read_only=True)
+    content = serializers.CharField(required=False)
     
+    class Meta:
+        model=CommentModel
+        fields = ["__all__"]
     
+class DanceCategoryModelSerializer(serializers.ModelSerializer):
+    uid = serializers.UUIDField(required=False)
+    title = serializers.CharField(required=False)
+    
+    class Meta:
+        model=DanceCategoryModel
+        fields = ('uid','title')
 
 class VideoModelSerializer(serializers.ModelSerializer):
     video_id = serializers.UUIDField(required=False)
