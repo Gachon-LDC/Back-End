@@ -3,20 +3,18 @@ from django.db.models import (
     UUIDField,
     TextField,
     IntegerField,
-    ForeignKey,
 )
-from django.db import models
 import uuid
 
 
 class UserModel(Model):
-    uid = UUIDField(primary_key=True,default = uuid.uuid4)
+    uid = UUIDField(primary_key=True, default=uuid.uuid4)
     email = TextField()
     pwd = TextField()
 
 
 class DanceCategoryModel(Model):
-    uid = UUIDField(primary_key=True,default = uuid.uuid4)
+    uid = UUIDField(primary_key=True, default=uuid.uuid4)
     title = TextField()
 
 
@@ -24,21 +22,21 @@ class DanceCategoryModel(Model):
 class VideoModel(Model):
     """file path : static/video/UID"""
 
-    video_id = UUIDField(primary_key=True,default = uuid.uuid4)
-    
-    uploader_id = ForeignKey(
-        UserModel, on_delete=models.SET_NULL, null=True
-    )  # many to one @ User.uid,
-    
+    video_id = UUIDField(primary_key=True)
+    uploader_id = UUIDField()  # many to one @ User.uid,
     title = TextField()
+    dance = UUIDField()
+    content = TextField(default="")
+
+
+class VideoAngleModel(Model):
     embeds = TextField()
-    dance = ForeignKey(DanceCategoryModel, on_delete=models.PROTECT)
+    video_id = UUIDField(primary_key=True)
     fps = IntegerField()
-    content = TextField()
 
 
 class CommentModel(Model):
-    uid = UUIDField(primary_key=True,default = uuid.uuid4)
-    videoId = UUIDField(default = uuid.uuid4)
-    writerId = UUIDField(default = uuid.uuid4)
+    uid = UUIDField(primary_key=True, default=uuid.uuid4)
+    videoId = UUIDField(default=uuid.uuid4)
+    writerId = UUIDField(default=uuid.uuid4)
     content = TextField()

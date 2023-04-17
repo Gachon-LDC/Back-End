@@ -1,0 +1,27 @@
+
+name: Deploy_and build
+    
+on:
+    push:
+        branches: [ main ]
+    workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy then build
+    runs-on: [ubuntu-latest]
+    
+    steps:
+      - name: SSH Remote Commands
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_IP }}
+          username: ${{ secrets.REMOTE_SSH_ID }}
+          password: ${{ secrets.PASSWORD }}
+          port: 22
+          script: |
+            cd Back-End
+            git pull
+            pipenv install
+            screen -S ldc_backend  -X quite
+            screen -dmS ldc_backend bash -c 'cd /home/ldc/Back-End;pipenv shell; gunicorn --bind :10010 LDC.wsgi:application'

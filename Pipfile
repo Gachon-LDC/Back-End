@@ -18,10 +18,12 @@ django = "*"
 djangorestframework = "*"
 django-cors-headers = "*"
 pandas = "*"
+gunicorn = "*"
+aiofiles = "*"
+asgiref = "*"
 
 [dev-packages]
 mypy = "*"
 
 [requires]
 python_version = "3.11"
-python_full_version = "3.11"

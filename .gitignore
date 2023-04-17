@@ -369,3 +369,6 @@ poetry.toml
 
 #Weight files
 *.pth
+/static/
+/media/
+*.sqlite3
