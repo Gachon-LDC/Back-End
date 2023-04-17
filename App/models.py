@@ -2,35 +2,44 @@ from django.db.models import (
     Model,
     UUIDField,
     TextField,
-    JSONField,
     IntegerField,
-    FileField,
-    BooleanField,
-    CharField,
-    ImageField
+    ForeignKey,
 )
+from django.db import models
+
+
+class UserModel(Model):
+    uid = UUIDField(primary_key=True)
+    email = TextField()
+    pwd = TextField()
+    salt = TextField()
+
+
+class DanceCategoryModel(Model):
+    uid = UUIDField(primary_key=True)
+    title = TextField()
+
 
 # Create your models here.
 class VideoModel(Model):
-    video_id = UUIDField(primary_key=True) 
-    uploader_id = TextField()  
-    post_id = TextField()       
-    angles = JSONField()    
-    # meta data
-    path = FileField()    
-    video_lenghth = IntegerField()
-    fps = IntegerField()           
+    """file path : static/video/UID"""
+
+    video_id = UUIDField(primary_key=True)
+    uploader_id = UUIDField()  # many to one @ User.uid,
+    title = TextField()
+
+    dance = UUIDField()
+    content = TextField(default="")
 
 
-class UserDance(Model):
-    video_id = UUIDField()
-    user_id = UUIDField()
-    image_id = IntegerField(primary_key=True)
-    image = TextField()
-    end_image = BooleanField(default=False)
-    
-    
-class ImageUpload(Model):
-    title = CharField(max_length=200)
-    text = TextField()
-    image = ImageField(upload_to="%Y/%m/%d")
+class VideoAngleModel(Model):
+    embeds = TextField()
+    video_id = UUIDField(primary_key=True)
+    fps = IntegerField()
+
+
+class CommentModel(Model):
+    uid = UUIDField(primary_key=True)
+    videoId = ForeignKey(VideoModel, on_delete=models.CASCADE)
+    writerId = ForeignKey(UserModel, on_delete=models.CASCADE)
+    content = TextField()

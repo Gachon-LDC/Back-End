@@ -1,0 +1,29 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[[source]]
+url = "https://download.pytorch.org/whl/cpu"
+verify_ssl = false
+name = "torch"
+
+[packages]
+torch = {version="*", index="torch"}
+matplotlib = "*"
+opencv-python-headless = "*"
+numpy = "*"
+pycocotools = "*"
+django = "*"
+djangorestframework = "*"
+django-cors-headers = "*"
+pandas = "*"
+gunicorn = "*"
+aiofiles = "*"
+asgiref = "*"
+
+[dev-packages]
+mypy = "*"
+
+[requires]
+python_version = "3.11"
