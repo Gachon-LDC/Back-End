@@ -8,8 +8,8 @@ from django.http import HttpRequest
 from App.utils.errors import HttpError, HTTPStatus, HttpErrorHandling
 from App.services import auth_service,comment_service
 from django.contrib.auth.hashers import check_password
-import json
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core import serializers
 
 @HttpErrorHandling
 async def comment_controller_byUid(req):
@@ -118,39 +118,42 @@ async def delete_comment_byUid(req:HttpRequest, uid):
     
     
 async def get_comment_byWriterId(req:HttpRequest):
-    rows=comment_service.check_correct_access(req)
+    rows=await comment_service.check_correct_access(req)
     if rows==False:
-        return HttpError("잘못된 유저의 접근입니다.", status = 404)
+        return HttpResponse("잘못된 유저의 접근입니다.", status = 404)
     else:
-        serializer = CommentModelSerializer(rows)
+        #serializer = CommentModelSerializer(rows)
+        json_data = serializers.serialize('json',rows)
         #result = json.dumps(rows,cls=DjangoJSONEncoder)
-        return HttpResponse(serializer,status=201,content_type = "application/json")
+        return HttpResponse(json_data,status=201,content_type = "application/json")
     
 async def delete_comment_byWriterId(req:HttpRequest):
-    rows = comment_service.check_correct_access(req)
+    rows = await comment_service.check_correct_access(req)
     if rows==False:
-        return HttpError("잘못된 유저의 접근입니다.", status = 404)
+        return HttpResponse("잘못된 유저의 접근입니다.", status = 404)
     else:
         rows.delete()
         return HttpResponse("삭제에 성공했습니다.", status=201)
-    
+
+#Get()
 async def get_comment_byVideoId(req:HttpRequest,videoId):
-    rows = comment_service.get_by_videoId(videoId)
+    rows = await comment_service.get_by_videoId(videoId)
     if rows==False:
         return HttpError("해당 비디오의 코멘트는 존재하지 않습니다.", status = 404)
     else:
-        serializer = CommentModelSerializer(rows)
-        #result = json.dumps(rows,cls = DjangoJSONEncoder)
-        return HttpResponse(serializer,status=201,content_type = "application/json")
+        print(rows)
+        #serializer = CommentModelSerializer(rows)
+        json_data = serializers.serialize('json', rows)
+        return HttpResponse(json_data,status=201,content_type = "application/json")
 
 #PUT()
 async def create_comment_byVideoId(req:HttpRequest):
     return await comment_service.comment_register(req)
 
 async def delete_comment_byVideoId(req:HttpRequest, videoId):
-    rows = comment_service.get_by_videoId(videoId)
+    rows = await comment_service.get_by_videoId(videoId)
     if rows==False:
-        return HttpError("해당 비디오의 코멘트는 존재하지 않기에 삭제할 수 없습니다.", status=404)
+        return HttpResponse("해당 비디오의 코멘트는 존재하지 않기에 삭제할 수 없습니다.", status=404)
     else:
         rows.delete()
         return HttpResponse("삭제에 성공했습니다.", status=201)

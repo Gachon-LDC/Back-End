@@ -39,6 +39,6 @@ class VideoModel(Model):
 
 class CommentModel(Model):
     uid = UUIDField(primary_key=True,default = uuid.uuid4)
-    videoId = ForeignKey(VideoModel, on_delete=models.CASCADE)
-    writerId = ForeignKey(UserModel, on_delete=models.CASCADE)
+    videoId = UUIDField(default = uuid.uuid4)
+    writerId = UUIDField(default = uuid.uuid4)
     content = TextField()

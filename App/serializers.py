@@ -14,13 +14,13 @@ class UserModelSerializer(serializers.ModelSerializer):
 
 class CommentModelSerializer(serializers.ModelSerializer):
     uid = serializers.UUIDField(required=False)
-    videoId = serializers.PrimaryKeyRelatedField(read_only=True)
-    writerId = serializers.PrimaryKeyRelatedField(read_only=True)
+    videoId = serializers.UUIDField(required=False)
+    writerId = serializers.UUIDField(required=False)
     content = serializers.CharField(required=False)
     
     class Meta:
         model=CommentModel
-        fields = ["__all__"]
+        fields = ('uid','videoId','writerId','content')
     
 class DanceCategoryModelSerializer(serializers.ModelSerializer):
     uid = serializers.UUIDField(required=False)
