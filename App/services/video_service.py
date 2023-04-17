@@ -16,7 +16,7 @@ async def get_by_id(pk) -> VideoModel:
 
 
 def is_writer_or_403(user_id, video: VideoModel):
-    if video.uploader_id.pk != user_id:
+    if video.uploader_id != user_id:
         raise HttpError(HTTPStatus.UNAUTHORIZED)
 
 
