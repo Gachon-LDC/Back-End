@@ -3,20 +3,18 @@ from django.db.models import (
     UUIDField,
     TextField,
     IntegerField,
-    ForeignKey,
 )
-from django.db import models
+import uuid
 
 
 class UserModel(Model):
-    uid = UUIDField(primary_key=True)
+    uid = UUIDField(primary_key=True, default=uuid.uuid4)
     email = TextField()
     pwd = TextField()
-    salt = TextField()
 
 
 class DanceCategoryModel(Model):
-    uid = UUIDField(primary_key=True)
+    uid = UUIDField(primary_key=True, default=uuid.uuid4)
     title = TextField()
 
 
@@ -27,7 +25,6 @@ class VideoModel(Model):
     video_id = UUIDField(primary_key=True)
     uploader_id = UUIDField()  # many to one @ User.uid,
     title = TextField()
-
     dance = UUIDField()
     content = TextField(default="")
 
@@ -39,7 +36,7 @@ class VideoAngleModel(Model):
 
 
 class CommentModel(Model):
-    uid = UUIDField(primary_key=True)
-    videoId = ForeignKey(VideoModel, on_delete=models.CASCADE)
-    writerId = ForeignKey(UserModel, on_delete=models.CASCADE)
+    uid = UUIDField(primary_key=True, default=uuid.uuid4)
+    videoId = UUIDField(default=uuid.uuid4)
+    writerId = UUIDField(default=uuid.uuid4)
     content = TextField()

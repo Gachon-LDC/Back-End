@@ -1,76 +1,79 @@
 from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
-from rest_framework.renderers import JSONRenderer
-from App.models import UserModel
-from App.serializers import UserModelSerializer
 from django.http import HttpRequest
+from App.utils.errors import HttpError, HTTPStatus, HttpErrorHandling
+from App.services import auth_service
 
-# Controller
-def auth_controller(req):
+
+# 로그인 관련 Controller
+@HttpErrorHandling
+async def auth_controller(req):
     if req.method == "GET":
-        return get_signed_user(req)
-        
+        return await get_signed_user(req)
+
     # etc...
-    if req.method =="PUT":
-        return register(req)
-    
+    # if req.method =="PUT":
+    #    return register(req)
+
     if req.method == "POST":
-        return sign_in(req)
-    
-    if req.method=="DELETE":
-        return sign_out(req)
+        return await sign_in(req)
+
+    if req.method == "DELETE":
+        return await log_out(req)
+
+    if req.method == "_":
+        raise HttpError(HTTPStatus.NOT_FOUND)
+
+
+# 회원가입 컨트롤러
+@HttpErrorHandling
+async def auth_register_controller(req):
+    if req.method == "POST":
+        return await sign_up(req)
+
+    if req.method == "DELETE":
+        return await sign_out(req)
+
+    if req.method == "_":
+        raise HttpError(HTTPStatus.NOT_FOUND)
+
 
 # GET User의 정보를 얻음
-def get_signed_user(req:HttpRequest):
-    data=JSONParser().parse(req)
-    query_set = UserModel.objects.get(email=data.get('email'))
-    #쿼리 예외 처리
-    if query_set.DoesNotExist:
-        return JsonResponse('해당 이메일이 존재 하지 않습니다.',status=201)
-    
-    serializer = UserModelSerializer(query_set,many=False)
-    #serializer 예외 처리
-    if serializer.is_valid():
-        json=JSONRenderer().render(serializer.data)
-        return JsonResponse(json, status=201)
-    else:
-        return JsonResponse(serializer.errors, status=400)
-    
-
-# PUT?? 회원 등록#POST로 수정해서 들고오기
-def register(req):
-    data=JSONParser().parse(req)
-    serializer = UserModelSerializer(data=data)
-    if serializer.is_valid():
-        json=JSONRenderer().render(serializer.data)
-        return JsonResponse(json, status=201)
-    else:
-        return JsonResponse(serializer.errors, status=401)
+async def get_signed_user(req: HttpRequest):
+    user = auth_service.get_signed_user(req)
+    if user is None:
+        raise HttpError(HTTPStatus.UNAUTHORIZED, "로그인되어 있지 않습니다.")
+    return JsonResponse(user.dict(), status=201)
 
 
 # POST 로그인
-def sign_in(req):
-    data=JSONParser().parse(req)
-    check_login=UserModel.objects.get(email=data.get('email'),pwd=data.get('pwd'),salt=data.get('salt'))
-    #쿼리 예외 처리
-    if check_login.DoesNotExist:
-        return JsonResponse('해당 계정이 존재 하지 않습니다.',status=201)
+async def sign_in(req: HttpRequest):
+    data = JSONParser().parse(req)
+    user = await auth_service.get_by_email(data.get("email"))
+    if user == False:
+        raise HttpError(HTTPStatus.NOT_FOUND, "메일과 일치하는 계정이 없습니다.")
+
+    signed_user = auth_service.sign_in(req, user, data.get("pwd"))
+    return JsonResponse(signed_user.dict(), status=201)
+
+
+# 로그 아웃
+async def log_out(req: HttpRequest):
+    user = auth_service.get_signed_user(req)
+    if user == None:
+        return HttpResponse("이미 로그아웃 되어 있습니다. 잘못된 접근입니다.", status=404)
+    auth_service.sign_out(req)
+    return HttpResponse("로그아웃 성공", status=201)
+
+
+# POST로 수정해서 들고오기
+async def sign_up(req):
+    return await auth_service.user_register(req)
 
 
 # DELETE 회원 탈퇴//로그 아웃
-def sign_out(req):
-    data=JSONParser().pares(req)
-    query_set = UserModel.objects.filter(email=data.get('email'))
-    #쿼리 예외 처리
-    if query_set.DoesNotExist:
-        return JsonResponse('해당 이메일이 존재 하지 않습니다.',status=201)
-    
-    serializer = UserModelSerializer(query_set,many=False);
-    #시리얼라이저 예외 처리
-    if serializer.is_valid():
-        query_set.delete()
-        json=JSONRenderer().render(serializer.data)
-        return JsonResponse(json, status=201)
+async def sign_out(req):
+    if await auth_service.user_withdraw(req):
+        return HttpResponse("회원탈퇴성공", status=201)
     else:
-        return JsonResponse(serializer.errors,status=401)
+        return HttpResponse("회원탈퇴실패", 404)
