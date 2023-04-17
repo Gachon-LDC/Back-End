@@ -110,7 +110,9 @@ async def user_withdraw(req):
 
 
 # req의 session에 user의 uid 값을 저장
-def sign_in(req: HttpRequest, user: UserModel) -> SessionUser:
+def sign_in(req: HttpRequest, user: UserModel, pwd: str) -> SessionUser:
+    if not check_password(pwd, user.pwd):
+        raise HttpError(HTTPStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.")
     session_user = SessionUser.fromUser(user)
     session_user.save(req.session)
     return user

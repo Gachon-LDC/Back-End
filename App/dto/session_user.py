@@ -1,26 +1,31 @@
 from __future__ import annotations
-from django.contrib.sessions import SessionBase
 from App.models import UserModel
 
 
 class SessionUser:
-    def __init__(self, uid: str):
+    def __init__(self, uid: str, email: str):
         assert uid != "", "uid is empty"
         self.uid: str | None = uid
+        self.email: str | None = email
 
-    def save(self, session: SessionBase):
+    def save(self, session):
         session["uid"] = self.uid
+        session["email"] = self.email
+
+    def dict(self):
+        return {"uid": self.uid, "email": self.email}
 
     @classmethod
-    def clear(cls, session: SessionBase):
+    def clear(cls, session):
         del session["uid"]
+        del session["email"]
 
     @classmethod
-    def from_session(cls, session: SessionBase) -> SessionUser | None:
+    def from_session(cls, session) -> SessionUser | None:
         if "uid" in session and (uid := session["uid"]) != "":
-            return cls(uid)
+            return cls(uid, session["email"])
         return None
 
     @classmethod
     def fromUser(cls, user: UserModel) -> SessionUser:
-        return cls(user.uid)
+        return cls(str(user.uid), user.email)

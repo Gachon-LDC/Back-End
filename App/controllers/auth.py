@@ -1,10 +1,8 @@
 from django.http import HttpResponse, JsonResponse
 from rest_framework.parsers import JSONParser
-from App.serializers import UserModelSerializer
 from django.http import HttpRequest
 from App.utils.errors import HttpError, HTTPStatus, HttpErrorHandling
 from App.services import auth_service
-from django.contrib.auth.hashers import check_password
 
 
 # 로그인 관련 Controller
@@ -44,27 +42,19 @@ async def auth_register_controller(req):
 async def get_signed_user(req: HttpRequest):
     user = auth_service.get_signed_user(req)
     if user is None:
-        return HttpResponse("현재 로그인되어 있지 않습니다.", status=404)
-    row = await auth_service.get_by_uid(user.uid)
-    serializer = UserModelSerializer(row)
-    return JsonResponse(serializer.data, status=201)
+        raise HttpError(HTTPStatus.UNAUTHORIZED, "로그인되어 있지 않습니다.")
+    return JsonResponse(user.dict(), status=201)
 
 
 # POST 로그인
 async def sign_in(req: HttpRequest):
     data = JSONParser().parse(req)
     user = await auth_service.get_by_email(data.get("email"))
-
     if user == False:
-        return HttpResponse("메일과 일치하는 계정이 없습니다.", status=404)
+        raise HttpError(HTTPStatus.NOT_FOUND, "메일과 일치하는 계정이 없습니다.")
 
-    if check_password(data.get("pwd"), user.pwd):
-        auth_service.sign_in(req, user)
-        return HttpResponse("로그인 성공.", status=201)
-
-        # 위에거 지우고 여기에 해당 웹 페이지로 이동코드 작성
-    else:
-        return HttpResponse("비밀번호가 틀렸습니다.", status=404)
+    signed_user = auth_service.sign_in(req, user, data.get("pwd"))
+    return JsonResponse(signed_user.dict(), status=201)
 
 
 # 로그 아웃
