@@ -1,7 +1,8 @@
 from django.http import HttpRequest, JsonResponse
-from App.utils.errors import HttpError, HTTPStatus
 from App.services import angle_service, learn_service
+from App.utils.errors import HttpError, HTTPStatus
 from App.utils.IController import IController
+from App.dto.session_user import SessionUser
 
 
 class LearnController(IController):
@@ -15,9 +16,9 @@ class LearnController(IController):
 
         if not signed : throw unauthorized error
         """
+        if SessionUser.from_session(req.session) is None:
+            raise HttpError(HTTPStatus.UNAUTHORIZED, "로그인이 필요합니다.")
         image = req.POST.get("image")
-
-        # TODO: check request user is signed
 
         if "image" == None:
             raise HttpError(HTTPStatus.UNPROCESSABLE_ENTITY)

@@ -3,10 +3,10 @@ from rest_framework import status
 from App.models import VideoModel
 from App.serializers import VideoModelSerializer
 from App.utils import int_or_0, IController
-from App.utils.errors import HttpError
+from App.utils.errors import HttpError, HTTPStatus
+from App.dto.session_user import SessionUser
 from App.services import video_service
 from asgiref.sync import sync_to_async
-import uuid
 
 
 class VideoController(IController):
@@ -37,13 +37,14 @@ class VideoController(IController):
         req.FILE["file"] : file - video file
 
         """
+        if (user := SessionUser.from_session(req.session)) is None:
+            raise HttpError(HTTPStatus.NOT_FOUND, "로그인이 필요합니다.")
         video = VideoModelSerializer(data={key: req.POST[key] for key in req.POST})
         video_file = req.FILES.get("file")
         if not video.is_valid():
             raise HttpError(status.HTTP_422_UNPROCESSABLE_ENTITY)
         if video_file.content_type != "video/mp4":
             raise HttpError(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
-        # TODO: get authorized userid
-        saved = await video_service.save_video(uuid.uuid4(), video, video_file)
+        saved = await video_service.save_video(user.uid, video, video_file)
 
         return JsonResponse(saved)

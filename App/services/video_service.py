@@ -46,7 +46,7 @@ async def update_video(
 
 
 async def save_video(
-    uploader_id: UUID, new_video: VideoModel | VideoModelSerializer, file
+    uploader_id: UUID | str, new_video: VideoModel | VideoModelSerializer, file
 ):
     if isinstance(new_video, VideoModelSerializer):
         new_video = VideoModel(**new_video.data)
