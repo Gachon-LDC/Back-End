@@ -16,7 +16,7 @@ async def get_by_id(pk) -> VideoModel:
 
 
 def is_writer_or_403(user_id, video: VideoModel):
-    if video.uploader_id != user_id:
+    if str(video.uploader_id) != str(user_id):
         raise HttpError(HTTPStatus.UNAUTHORIZED)
 
 
@@ -24,11 +24,10 @@ async def delete_by_id(pk, user_id: str):
     """(async) delete video by id"""
     video = await get_by_id(pk)
     is_writer_or_403(user_id, video)
-    video_del = video.adelete()
     angle_del = angle_service.delete_angle(pk)
+    VideoModel.delete(video)
     file = FilePath("video", pk, "mp4")
     file.delete_thread()
-    await video_del
     await angle_del
 
 
