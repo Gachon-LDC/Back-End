@@ -24,7 +24,7 @@ async def get_by_email(email):
         row = UserModel.objects.get(email=email)
         return row
     except UserModel.DoesNotExist:
-        return False
+        return None
 
 
 # 해당 uid의 row값을 삭제
@@ -67,28 +67,24 @@ async def user_register(req):
     check_result = UserModel.objects.filter(email=newUserModel.email)
 
     if check_result.exists():
-        return HttpResponse("이미 존재하는 계정입니다.", status=404)
-    else:
-        newUserModel.save()
-        return HttpResponse("계정 생성 성공", status=201)
+        raise HttpError(HTTPStatus.CONFLICT, "이미 존재하는 계정입니다.")
+    newUserModel.save()
+
 
 
 # 회원탈퇴시
-async def user_withdraw(req):
-    data = JSONParser().parse(req)
-    email = data.get("email")
-    row = await get_by_email(email)
-    if row == False:
-        return False
+async def user_withdraw(session_user: SessionUser, delete_info):
+    email = delete_info.get("email")
+    pwd = delete_info.get("pwd")
+    user = await get_by_email(email)
+    if (
+        user is None
+        or str(user.uid) != session_user.uid
+        or not check_password(pwd, user.pwd)
+    ):
+        raise HttpError(HTTPStatus.UNAUTHORIZED)
 
-    print(row.pwd)
-    print(data.get("pwd"))
-
-    if check_password(data.get("pwd"), row.pwd):
-        row.delete()
-        return True
-    else:
-        return False
+    user.delete()
 
 
 # email과 pwd로 계정 확인

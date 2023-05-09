@@ -27,7 +27,7 @@ class AuthController(IController):
         """sign in"""
         data = JSONParser().parse(req)
         user = await auth_service.get_by_email(data.get("email"))
-        if user == False:
+        if user is None:
             raise HttpError(HTTPStatus.NOT_FOUND, "메일과 일치하는 계정이 없습니다.")
 
         signed_user = auth_service.sign_in(req, user, data.get("pwd"))
@@ -41,35 +41,28 @@ class AuthController(IController):
         return HttpResponse("로그아웃 성공", status=201)
 
 
-# 회원가입 컨트롤러
-@HttpErrorHandling
-async def auth_register_controller(req):
-    if req.method == "POST":
-        return await sign_up(req)
+class AuthRegisterController(IController):
+    """auth register controller
+    url : /auth/register
+    """
 
-    if req.method == "DELETE":
-        return await sign_out(req)
+    http_method_names = ["post", "delete"]
 
-    if req.method == "_":
-        raise HttpError(HTTPStatus.NOT_FOUND)
+    async def post(self, req: HttpRequest):
+        """sign up
+        register user
+        """
+        await auth_service.user_register(req)
+        return HttpResponse("계정 생성 성공", status=201)
 
+    async def delete(self, req: HttpRequest):
+        """sign out
+        dereguster user
+        """
+        session_user = auth_service.get_signed_user(req)
+        if session_user is None:
+            raise HttpError(HTTPStatus.UNAUTHORIZED, "로그인 되어있지 않습니다.")
+        data = JSONParser().parse(req)
 
-# GET User의 정보를 얻음
-async def get_signed_user(req: HttpRequest):
-    user = auth_service.get_signed_user(req)
-    if user is None:
-        raise HttpError(HTTPStatus.UNAUTHORIZED, "로그인되어 있지 않습니다.")
-    return JsonResponse(user.dict(), status=201)
-
-
-# POST로 수정해서 들고오기
-async def sign_up(req):
-    return await auth_service.user_register(req)
-
-
-# DELETE 회원 탈퇴//로그 아웃
-async def sign_out(req):
-    if await auth_service.user_withdraw(req):
+        await auth_service.user_withdraw(session_user, data)
         return HttpResponse("회원탈퇴성공", status=201)
-    else:
-        return HttpResponse("회원탈퇴실패", 404)
