@@ -119,10 +119,8 @@ def sign_in(req: HttpRequest, user: UserModel, pwd: str) -> SessionUser:
 
 
 # 해당유저의 req의 session을 빈자리로 만듬.
-def sign_out(req: HttpRequest):
-    print(req.session["uid"])
-    SessionUser.clear(req.session)
-    print(req.session["uid"])
+def sign_out(session):
+    SessionUser.clear(session)
 
 
 # 해당 유저가 현재 로그인이 되어있는지 확인.
