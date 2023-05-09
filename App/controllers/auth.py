@@ -12,7 +12,16 @@ class AuthController(IController):
     url : /auth
     """
 
-    http_method_names = ["post", "delete"]
+    http_method_names = ["get", "post", "delete"]
+
+    async def get(self, req: HttpRequest):
+        """
+        get siend user
+        return signed user"""
+        signed_user = auth_service.get_signed_user(req)
+        if signed_user is None:
+            raise HttpError(HTTPStatus.NOT_FOUND, "로그인 되어있지 않습니다.")
+        return JsonResponse(signed_user.dict())
 
     async def post(self, req: HttpRequest):
         """sign in"""
