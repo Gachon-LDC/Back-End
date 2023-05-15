@@ -5,14 +5,15 @@ from django.http import HttpRequest
 from App.utils.errors import HttpError, HTTPStatus
 from App.models import CommentModel
 import uuid
+from App.dto.comment_dto import CommentUpdateDTO
 
 
 # email의 해당 row값을 리턴
-async def get_by_uid(uid) -> CommentModel | None:
-    row = await CommentModel.objects.aget(uid=uid)
-    if not row.exists():
+async def get_by_uid(uid: str) -> CommentModel | None:
+    try:
+        return await CommentModel.objects.aget(uid=uid)
+    except CommentModel.DoesNotExist:
         raise HttpError(HTTPStatus.NOT_FOUND)
-    return row
 
 
 async def get_by_writerId(writerId):
@@ -24,8 +25,6 @@ async def get_by_writerId(writerId):
 
 async def get_by_videoId(videoId):
     rows = CommentModel.objects.filter(videoId=videoId)
-    if not rows.exists():
-        raise HttpError(HTTPStatus.NOT_FOUND)
     return rows
 
 
@@ -80,18 +79,16 @@ def check_log_in(req: HttpRequest):
         return False
 
 
-async def delete(comment_id, user_id: str):
-    comment = await CommentModel.objects.aget(uid=comment_id)
-    if comment.writerId != user_id:
+async def delete(comment: CommentModel, user_id: str):
+    if str(comment.writerId) != user_id:
         raise HttpError(HTTPStatus.FORBIDDEN, "삭제할 권한이 없습니다.")
     comment.delete()
 
 
-async def update(comment_id, content, uid):
-    comment = await CommentModel.objects.aget(uid=comment_id)
-    if comment.writerId != uid:
-        raise HttpError(HTTPStatus.FORBIDDEN, "수정 권한이 없습니다.")
-    comment.content = content
+def update(comment: CommentModel, update_dto: CommentUpdateDTO):
+    if str(comment.writerId) != update_dto.writer_id:
+        raise HttpError(HTTPStatus.FORBIDDEN)
+    comment.content = update_dto.content
     comment.save()
     return comment
 
