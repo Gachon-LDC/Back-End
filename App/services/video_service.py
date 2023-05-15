@@ -17,7 +17,7 @@ async def get_by_id(pk) -> VideoModel:
 
 async def get_by_category(category_id) -> VideoModel:
     """(async) get video by category"""
-    return VideoModel.objects.filter(category=category_id)
+    return VideoModel.objects.filter(dance=category_id)
 
 
 def is_writer_or_403(user_id, video: VideoModel):
