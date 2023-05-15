@@ -27,6 +27,7 @@ class VideoModel(Model):
     title = TextField()
     dance = UUIDField()
     content = TextField(default="")
+    category = UUIDField(null=True)  # many to one @ Category.uid,
 
 
 class VideoAngleModel(Model):

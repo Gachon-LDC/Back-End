@@ -1,60 +1,39 @@
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.parsers import JSONParser
-from rest_framework.renderers import JSONRenderer
-from App.models import DanceCategoryModel
-from App.serializers import DanceCategoryModelSerializer
-from django.http import HttpRequest
-from App.utils.errors import HttpError, HTTPStatus, HttpErrorHandling
-from App.services import dance_category_service
-from django.contrib.auth.hashers import check_password
-import json
-from django.core.serializers.json import DjangoJSONEncoder
 from django.core import serializers
+from django.http import HttpResponse, JsonResponse
+from django.http import HttpRequest
 
-async def dance_category_controller(req):
-    if req.method == "GET":
-        return await get_categories(req)
-    #댓글을 uid로 찾고 content로 수정함.
-    if req.method == "POST":
-        if dance_category_service.check_log_in(req):
-            return await add_category(req)
-        else:
-            return HttpResponse("현재 로그인되어 있지 않습니다.",status=404)
-
-    if req.method=="_":
-        raise HttpError(HTTPStatus.NOT_FOUND)
-    
-async def dance_category_controller_by_videoID(req,uid):
-    if req.method == "GET":
-        return await get_videos_by_category(req,uid)
-
-    if req.method=="_":
-        raise HttpError(HTTPStatus.NOT_FOUND)
+from App.serializers import DanceCategoryModelSerializer, VideoModelSerializer
+from App.services import dance_category_service, video_service
+from App.utils import IController
+from App.utils.errors import HttpError, HTTPStatus
+from App.dto.session_user import SessionUser
 
 
-# GET
-async def get_categories(req):
-    rows = await dance_category_service.get_all(req)
-    
-    if(rows==None): return HttpError("카테고리가 존재하지 않습니다.")
-    else:
-        #serializer = DanceCategoryModelSerializer(rows)
-        json_data = serializers.serialize('json', rows)
-        return HttpResponse(json_data,status=201,content_type = "application/json")
+class DanceCategoryController(IController):
+    http_method_names = ["get", "post"]
+
+    async def get(self, _):
+        categories = await dance_category_service.get_all()
+        serialized = DanceCategoryModelSerializer(categories, many=True)
+        return JsonResponse(serialized.data, status=201, safe=False)
+
+    async def post(self, req: HttpRequest):
+        if SessionUser.from_session(req.session) is None:
+            raise HttpError(HTTPStatus.UNAUTHORIZED)
+        category = await dance_category_service.create(req)
+        return JsonResponse(DanceCategoryModelSerializer(category).data, status=201)
 
 
-# GET(id)
-async def get_videos_by_category(req, uid):
-    row = await dance_category_service.get_by_id(uid)
-    
-    if(row==None): return HttpError("카테고리가 존재하지 않습니다.")
-    else:
-        #serializer = DanceCategoryModelSerializer(row)
-        json_data = serializers.serialize('json', [row])
-        return HttpResponse(json_data,status=201,content_type = "application/json")
+class DanceCategoryItemController(IController):
+    http_method_names = ["get", "delete", "put"]
 
-
-# POST
-async def add_category(req):
-    return await dance_category_service.dance_category_register(req)
+    async def get(self, req: HttpRequest, uid: str):
+        category = await dance_category_service.get_by_id(uid)
+        if category == None:
+            raise HttpError(HTTPStatus.NOT_FOUND)
+        serialized = DanceCategoryModelSerializer(category).data
+        if req.GET.get("video") in ["true", "True"]:
+            videos = await video_service.get_by_category(uid)
+            video_serialized = VideoModelSerializer(videos, many=True)
+            serialized["videos"] = video_serialized.data
+        return JsonResponse(serialized, status=201)
