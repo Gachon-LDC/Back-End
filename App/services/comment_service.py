@@ -1,11 +1,9 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 from rest_framework.parsers import JSONParser
 from App.models import CommentModel
-from django.http import HttpRequest
-from App.utils.errors import HttpError, HTTPStatus
-from App.models import CommentModel
-import uuid
 from App.dto.comment_dto import CommentUpdateDTO
+from App.utils.errors import HttpError, HTTPStatus
+import uuid
 
 
 # email의 해당 row값을 리턴

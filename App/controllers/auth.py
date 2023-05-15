@@ -1,7 +1,7 @@
 from django.http import HttpResponse, JsonResponse
 from rest_framework.parsers import JSONParser
 from django.http import HttpRequest
-from App.utils.errors import HttpError, HTTPStatus, HttpErrorHandling
+from App.utils.errors import HttpError, HTTPStatus
 from App.services import auth_service
 from App.utils import IController
 

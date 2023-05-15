@@ -2,7 +2,6 @@ from django.http import HttpRequest
 from rest_framework.parsers import JSONParser
 from App.utils.errors import HttpError, HTTPStatus
 from App.models import DanceCategoryModel
-from App.serializers import DanceCategoryModelSerializer
 import uuid
 
 

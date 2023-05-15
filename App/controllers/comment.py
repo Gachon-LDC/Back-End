@@ -1,6 +1,5 @@
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpRequest
 from App.serializers import CommentModelSerializer
-from django.http import HttpRequest
 from App.utils.errors import HttpError, HTTPStatus
 from App.services import comment_service
 from App.utils import IController

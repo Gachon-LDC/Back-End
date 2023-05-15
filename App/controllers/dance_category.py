@@ -1,6 +1,4 @@
-from django.core import serializers
-from django.http import HttpResponse, JsonResponse
-from django.http import HttpRequest
+from django.http import JsonResponse, HttpRequest
 
 from App.serializers import DanceCategoryModelSerializer, VideoModelSerializer
 from App.services import dance_category_service, video_service

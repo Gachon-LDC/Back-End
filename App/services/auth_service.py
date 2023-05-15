@@ -1,13 +1,12 @@
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpRequest, JsonResponse
+from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.parsers import JSONParser
 from rest_framework.renderers import JSONRenderer
+from App.dto.session_user import SessionUser
 from App.models import UserModel
 from App.serializers import UserModelSerializer
-from django.http import HttpRequest
 from App.utils.errors import HttpError, HTTPStatus
 import uuid
-from django.contrib.auth.hashers import make_password, check_password
-from App.dto.session_user import SessionUser
 
 
 # uid의 해당 row값을 리턴
@@ -69,7 +68,6 @@ async def user_register(req):
     if check_result.exists():
         raise HttpError(HTTPStatus.CONFLICT, "이미 존재하는 계정입니다.")
     newUserModel.save()
-
 
 
 # 회원탈퇴시
