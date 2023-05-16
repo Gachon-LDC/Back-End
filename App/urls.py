@@ -8,9 +8,11 @@ urlpatterns = [
     path("auth", auth.AuthController.as_view()),
     path("auth/register", auth.AuthRegisterController.as_view()),  # 회원가입 엔드포인트
     path("videos", include("App.controllers.video.url")),
-    path("comments/<uuid:uid>", comment.CommentItemController.as_view()),  # 코멘트 엔드포인트
-    path("danceCategory", dance_category.dance_category_controller),  # 댄스 카테코리 다 가져오기
+    path("comments/<str:uid>", comment.CommentItemController.as_view()),  # 코멘트 엔드포인트
     path(
-        "danceCategory/<uuid:uid>/", dance_category.dance_category_controller_by_videoID
+        "category", dance_category.DanceCategoryController.as_view()
+    ),  # 댄스 카테코리 다 가져오기
+    path(
+        "category/<str:uid>/", dance_category.DanceCategoryItemController.as_view()
     ),  # 댄스 카테코리 다 가져오기
 ]

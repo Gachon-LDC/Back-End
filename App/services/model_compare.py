@@ -29,12 +29,3 @@ def get_angle(image: np.ndarray, angle_idx=0, isfile=False):
     frame_provider = ImageReader([image], isfile=isfile)
     angle = predict_pose(POST_NET, frame_provider).angles[angle_idx]
     return angle
-
-
-if __name__ == "__main__":
-    impath = "./move1.jpeg"
-    impath2 = "./move1_compare1.jpeg"
-    angle1 = get_angle(impath, isfile=True)
-    angle2 = get_angle(impath, isfile=True)
-    cos = cos_sim(angle1, angle2)
-    print(cos)

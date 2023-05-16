@@ -15,6 +15,11 @@ async def get_by_id(pk) -> VideoModel:
         raise HttpError(HTTPStatus.NOT_FOUND)
 
 
+async def get_by_category(category_id) -> VideoModel:
+    """(async) get video by category"""
+    return VideoModel.objects.filter(dance=category_id)
+
+
 def is_writer_or_403(user_id, video: VideoModel):
     if str(video.uploader_id) != str(user_id):
         raise HttpError(HTTPStatus.UNAUTHORIZED)

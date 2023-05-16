@@ -21,7 +21,7 @@ class ContentController(IController):
         ret = await video_service.get_by_id(video_id)
         serialized = VideoModelSerializer(ret)
         ret = serialized.data
-        if not req.GET.get("no_comment"):
+        if req.GET.get("comment") not in ["false", "False"]:
             comments = await comment_service.get_by_videoId(video_id)
             comment_serialized = CommentModelSerializer(comments, many=True)
             ret["comments"] = comment_serialized.data

@@ -25,9 +25,6 @@ class CommentModelSerializer(serializers.ModelSerializer):
 
 
 class DanceCategoryModelSerializer(serializers.ModelSerializer):
-    uid = serializers.UUIDField(required=False)
-    title = serializers.CharField(required=False)
-
     class Meta:
         model = DanceCategoryModel
         fields = ("uid", "title")

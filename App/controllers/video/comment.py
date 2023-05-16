@@ -13,7 +13,7 @@ class CommentController(IController):
     async def get(self, _: HttpRequest, video_id: str):
         comments = await comment_service.get_by_videoId(video_id)
         serialized = CommentModelSerializer(comments, many=True).data
-        return JsonResponse(serialized, status=201)
+        return JsonResponse(serialized, status=201, safe=False)
 
     async def post(self, req: HttpRequest, video_id: str):
         content = JSONParser().parse(req)["content"]

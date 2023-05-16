@@ -25,7 +25,7 @@ class VideoModel(Model):
     video_id = UUIDField(primary_key=True)
     uploader_id = UUIDField()  # many to one @ User.uid,
     title = TextField()
-    dance = UUIDField()
+    dance = UUIDField(null=True)  # many to one @ Category.uid,
     content = TextField(default="")
 
 
