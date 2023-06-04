@@ -1,8 +1,11 @@
-from App.models import VideoModel, VideoAngleModel
-from App.utils import FilePath
-from .model_predict import predict_pose, VideoReader
 from threading import Thread
+
 import cv2
+
+from App.models import VideoAngleModel, VideoModel
+from App.utils import FilePath
+
+from .model_predict import VideoReader, predict_pose
 
 
 def __save_predict_video(video, file):
@@ -33,5 +36,5 @@ async def delete_angle(id):
 
 
 async def get_by_id(id):
-    angle = await VideoAngleModel.aget(pk=id)
+    angle = await VideoAngleModel.objects.aget(pk=id)
     return angle
