@@ -1,10 +1,13 @@
+from uuid import UUID, uuid4
+
 from django.db import IntegrityError
-from App.utils.errors import HttpError, HTTPStatus
-from App.utils import FilePath
+
 from App.models import VideoModel
 from App.serializers import VideoModelSerializer
+from App.utils import FilePath
+from App.utils.errors import HttpError, HTTPStatus
+
 from . import angle_service
-from uuid import uuid4, UUID
 
 
 async def get_by_id(pk) -> VideoModel:

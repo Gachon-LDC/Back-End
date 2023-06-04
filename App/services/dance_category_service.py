@@ -1,8 +1,10 @@
+import uuid
+
 from django.http import HttpRequest
 from rest_framework.parsers import JSONParser
-from App.utils.errors import HttpError, HTTPStatus
+
 from App.models import DanceCategoryModel
-import uuid
+from App.utils.errors import HttpError, HTTPStatus
 
 
 async def get_by_id(uid) -> DanceCategoryModel:
