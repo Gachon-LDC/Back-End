@@ -10,7 +10,7 @@ class LearnController(IController):
     url : /video/[video_id]/learn
     """
 
-    async def get(req: HttpRequest, video_id: str):
+    async def post(self, req: HttpRequest, video_id: str):
         """_summary_ POST compare frame\n
         check current frame's simirarity
 
@@ -18,13 +18,17 @@ class LearnController(IController):
         """
         if SessionUser.from_session(req.session) is None:
             raise HttpError(HTTPStatus.UNAUTHORIZED, "로그인이 필요합니다.")
-        image = req.POST.get("image")
-
-        if "image" == None:
+        image = req.FILES.get("image")
+        nframe = req.POST.get("nframe")
+        if (
+            nframe is None
+            or image is None
+            or image.content_type not in ["image/jpeg", "image/png"]
+        ):
             raise HttpError(HTTPStatus.UNPROCESSABLE_ENTITY)
 
         video = await angle_service.get_by_id(video_id)
-        np_image = learn_service.cvt_base64_2_np(image)
+        np_image = learn_service.image2np(image)
 
-        simirarity = learn_service.compare_from_frame(np_image, video, 0)
+        simirarity = learn_service.compare_from_frame(np_image, video, int(nframe))
         return JsonResponse({"simirarity": simirarity})

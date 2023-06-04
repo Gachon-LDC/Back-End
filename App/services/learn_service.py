@@ -4,6 +4,7 @@ import io
 import cv2
 import numpy as np
 from PIL import Image
+from django.core.files.uploadedfile import TemporaryUploadedFile
 
 from App.models import VideoAngleModel
 from App.services.model_compare import get_angle, cos_sim
@@ -36,3 +37,10 @@ def compare_from_frame(
             sim = cur
 
     return sim
+
+
+def image2np(img: TemporaryUploadedFile):
+    im = np.array(Image.open(img))
+    if im.shape[-1] == 4:
+        im = cv2.cvtColor(im, cv2.COLOR_RGBA2RGB)
+    return im

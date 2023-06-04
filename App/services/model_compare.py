@@ -1,6 +1,6 @@
 import numpy as np
 
-from .model_predict import POST_NET, ImageReader, predict_pose
+from .model_predict import ImageReader, predict_pose
 
 
 def map_norm_item(item_list):
@@ -27,5 +27,5 @@ def cos_sim(a, b):
 
 def get_angle(image: np.ndarray, angle_idx=0, isfile=False):
     frame_provider = ImageReader([image], isfile=isfile)
-    angle = predict_pose(POST_NET, frame_provider).angles[angle_idx]
+    angle = predict_pose(frame_provider).angles[angle_idx]
     return angle
