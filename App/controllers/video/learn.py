@@ -16,8 +16,8 @@ class LearnController(IController):
 
         if not signed : throw unauthorized error
         """
-        # if SessionUser.from_session(req.session) is None:
-        #     raise HttpError(HTTPStatus.UNAUTHORIZED, "로그인이 필요합니다.")
+        if SessionUser.from_session(req.session) is None:
+            raise HttpError(HTTPStatus.UNAUTHORIZED, "로그인이 필요합니다.")
         image = req.FILES.get("image")
         nframe = req.POST.get("nframe")
         if (
