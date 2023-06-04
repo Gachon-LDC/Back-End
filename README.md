@@ -2,7 +2,7 @@
 [Gachon LDC](https://github.com/Gachon-LDC) Project Back-End
 
 ## document
-[Document](https://github.com/Gachon-LDC/Back-End/wiki)
+[Document](https://github.com/Gachon-LDC/.github/wiki/doc_backend)
 
 ## Tested Envirorment
 
