@@ -31,4 +31,4 @@ class LearnController(IController):
         np_image = learn_service.image2np(image)
 
         simirarity = learn_service.compare_from_frame(np_image, video, int(nframe))
-        return JsonResponse({"simirarity": simirarity})
+        return JsonResponse({"simirarity": simirarity, "fps": video.fps})
